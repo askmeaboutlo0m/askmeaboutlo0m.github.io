@@ -31,8 +31,6 @@ var AdventureScene = function() {
 			_gthis.putBuffer();
 		}
 	});
-	this.resize();
-	new haxe_Timer(1000).run = $bind(this,this.resize);
 	this.adv = new adv_Adventure(this);
 	this.adv.welcome();
 	this.adv.setRoom("restroom");
@@ -56,12 +54,6 @@ AdventureScene.prototype = {
 	,wait: function() {
 		this.print("");
 	}
-	,resize: function() {
-		var outputHeight = AdventureScene.jquery("#main-container").height() - AdventureScene.jquery("#input").height() - 24;
-		if(outputHeight > 0) {
-			AdventureScene.jquery("#output").css("height","" + outputHeight + "px");
-		}
-	}
 	,ready: function() {
 		AdventureScene.jquery("#input button").prop("disabled",false);
 		this.isReady = true;
@@ -73,7 +65,8 @@ AdventureScene.prototype = {
 	,put: function(s) {
 		var output = AdventureScene.jquery("#output");
 		output.text(output.text() + s);
-		output.scrollTop(output.get()[0].scrollHeight);
+		var body = AdventureScene.jquery("html");
+		body.scrollTop(body.get()[0].scrollHeight);
 	}
 	,putBuffer: function() {
 		var _gthis = this;
