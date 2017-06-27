@@ -325,7 +325,7 @@ adv_Adventure.prototype = {
 			this.print(this.room.look());
 			this.room.visited = true;
 		}
-		if(this.scene.tripping && this.inv.has(adv_Thing.nail)) {
+		if(this.scene.tripping && (this.inv.has(adv_Thing.nail) || this.inv.has(adv_Thing.plug))) {
 			this.scene.trip = true;
 			this.print("");
 			this.print("You feel the effects of the WEEDS wearing off.");
