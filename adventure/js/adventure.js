@@ -116,6 +116,8 @@ AdventureScene.prototype = {
 				if(!this.tripping) {
 					AdventureScene.jquery("body").animate({ color : this.fg, backgroundColor : this.bg});
 				}
+			} else if(adv_Profanity.isContainedIn(norm)) {
+				this.adv.onProfanity();
 			} else {
 				adv_Parser.parse(this.adv,norm);
 			}
@@ -380,6 +382,9 @@ adv_Adventure.prototype = {
 		this.print("");
 		this.over = true;
 	}
+	,onProfanity: function() {
+		this.print(this.randomMessage(["onProfanity"]));
+	}
 	,index: function(key,value) {
 		if(value != null) {
 			var _this = this.indexes;
@@ -520,6 +525,9 @@ adv_Adventure.prototype = {
 			this.print(this.room.look());
 		} else if(verb == "inventory") {
 			this.print(this.inv.look());
+		} else if(verb == "undress" || verb == "divest") {
+			this.interact("take","clothes");
+			return;
 		} else if(verb == "yes" && this.userData.expectFight) {
 			this.combine("kill","dragon","hands");
 		} else if(verb == "no" && this.userData.expectFight) {
@@ -574,7 +582,7 @@ adv_Adventure.prototype = {
 		if(this.preempt([verb,thing.id])) {
 			return;
 		}
-		if(verb == "look" && thing == adv_Thing.self) {
+		if(["look","open","take"].indexOf(verb) != -1 && thing == adv_Thing.self) {
 			this.act("inventory");
 			return;
 		}
@@ -858,6 +866,13 @@ adv_Parser.mungeWords = function(input) {
 };
 adv_Parser.parse = function(adv1,str) {
 	adv1.interpret(adv_Parser.mungeWords(new EReg("\\s+","g").split(adv_Parser.applyReplacements(str))));
+};
+var adv_Profanity = function() { };
+adv_Profanity.__name__ = true;
+adv_Profanity.isContainedIn = function(str) {
+	var tmp = adv_Profanity.PROFANITY;
+	var _this_r = new RegExp("\\s+","gi".split("u").join(""));
+	return tmp.match(StringTools.trim(str).replace(_this_r," "));
 };
 var adv_RestRoom = function() {
 	adv_Room.call(this);
@@ -1474,12 +1489,42 @@ adv_Thing.clapper = new adv_Thing("clapper","CLAPPER","CLAPPER",["bulb","clapper
 adv_Thing.clothes = (function($this) {
 	var $r;
 	var _g = new haxe_ds_StringMap();
-	if(__map_reserved["drop rip tear pull"] != null) {
-		_g.setReserved("drop rip tear pull","take");
+	if(__map_reserved["drop"] != null) {
+		_g.setReserved("drop","take");
 	} else {
-		_g.h["drop rip tear pull"] = "take";
+		_g.h["drop"] = "take";
 	}
-	$r = new adv_Thing("clothes","CLOTHES","the CLOTHES you're wearing",["clothes","clothing","pants","shirt"],_g);
+	if(__map_reserved["rip"] != null) {
+		_g.setReserved("rip","take");
+	} else {
+		_g.h["rip"] = "take";
+	}
+	if(__map_reserved["tear"] != null) {
+		_g.setReserved("tear","take");
+	} else {
+		_g.h["tear"] = "take";
+	}
+	if(__map_reserved["pull"] != null) {
+		_g.setReserved("pull","take");
+	} else {
+		_g.h["pull"] = "take";
+	}
+	if(__map_reserved["undress"] != null) {
+		_g.setReserved("undress","take");
+	} else {
+		_g.h["undress"] = "take";
+	}
+	if(__map_reserved["remove"] != null) {
+		_g.setReserved("remove","take");
+	} else {
+		_g.h["remove"] = "take";
+	}
+	if(__map_reserved["divest"] != null) {
+		_g.setReserved("divest","take");
+	} else {
+		_g.h["divest"] = "take";
+	}
+	$r = new adv_Thing("clothes","CLOTHES","the CLOTHES you're wearing",["clothes","clothing","trousers","trouser","pants","shirt"],_g);
 	return $r;
 }(this));
 adv_Thing.dragon = (function($this) {
@@ -1726,7 +1771,7 @@ adv_Thing.greenFlute = (function($this) {
 	} else {
 		_g.h["smoke"] = "use";
 	}
-	$r = new adv_Thing("greenFlute","GREENFLUTE","a FLUTE stuffed with dry, green WEEDS",["bong","flute","greenflute","pipe"],_g);
+	$r = new adv_Thing("greenFlute","GREENFLUTE","a FLUTE stuffed with dry, green WEEDS",["bong","flute","greenflute","pipe","weedeveryday","weeds","weed","greenweeds"],_g);
 	return $r;
 }(this));
 adv_Thing.greenWeeds = (function($this) {
@@ -1888,7 +1933,7 @@ adv_Thing.litGreenFlute = (function($this) {
 	} else {
 		_g.h["draw"] = "use";
 	}
-	$r = new adv_Thing("litGreenFlute","LITGREENFLUTE","a flute stuffed with smoldering green WEEDS",["bong","flute","litgreenflute","pipe"],_g);
+	$r = new adv_Thing("litGreenFlute","LITGREENFLUTE","a flute stuffed with smoldering green WEEDS",["bong","flute","litgreenflute","pipe","weedeveryday","weeds","weed","greenweeds"],_g);
 	return $r;
 }(this));
 adv_Thing.litYellowFlute = (function($this) {
@@ -1919,7 +1964,7 @@ adv_Thing.litYellowFlute = (function($this) {
 	} else {
 		_g.h["smoke"] = "use";
 	}
-	$r = new adv_Thing("litYellowFlute","LITYELLOWFLUTE","a FLUTE stuffed with smoldering yellow WEEDS",["bong","flute","lityellowflute","pipe"],_g);
+	$r = new adv_Thing("litYellowFlute","LITYELLOWFLUTE","a FLUTE stuffed with smoldering yellow WEEDS",["bong","flute","lityellowflute","pipe","weedeveryday"],_g);
 	return $r;
 }(this));
 adv_Thing.nail = (function($this) {
@@ -2013,7 +2058,7 @@ adv_Thing.pants = (function($this) {
 	} else {
 		_g.h["put"] = "use";
 	}
-	$r = new adv_Thing("pants","PANTS","your PANTS",["pant","pants","shorts","trouser","trousers"],_g);
+	$r = new adv_Thing("pants","PANTS","your PANTS",["pant","pants","shorts","trouser","trousers","clothes","rag"],_g);
 	return $r;
 }(this));
 adv_Thing.plug = (function($this) {
@@ -2092,7 +2137,7 @@ adv_Thing.secretPassage = (function($this) {
 	$r = new adv_Thing("secretPassage","SECRETPASSAGE","",["pass","passage","secret","secretpass","secretpassage","stair","stairs"],_g);
 	return $r;
 }(this));
-adv_Thing.self = new adv_Thing("self","SELF","YOURSELF",["inventory","myself","self"],null);
+adv_Thing.self = new adv_Thing("self","SELF","YOURSELF",["inventory","myself","self","yourself"],null);
 adv_Thing.shiny = new adv_Thing("shiny","SHINY THING","SHINY",["shiny","shiny thing","shinything","thing"],null);
 adv_Thing.shirt = (function($this) {
 	var $r;
@@ -2112,7 +2157,7 @@ adv_Thing.shirt = (function($this) {
 	} else {
 		_g.h["equip"] = "use";
 	}
-	$r = new adv_Thing("shirt","SHIRT","your SHIRT",["shirt","tshirt"],_g);
+	$r = new adv_Thing("shirt","SHIRT","your SHIRT",["shirt","tshirt","clothes","cloth"],_g);
 	return $r;
 }(this));
 adv_Thing.silicaGelPacket = (function($this) {
@@ -2364,7 +2409,7 @@ adv_Thing.wetFlute = (function($this) {
 	} else {
 		_g.h["blow"] = "use";
 	}
-	$r = new adv_Thing("wetFlute","WETFLUTE","a FLUTE stuffed with wet, green WEEDS",["bong","flute","pipe","wetflute"],_g);
+	$r = new adv_Thing("wetFlute","WETFLUTE","a FLUTE stuffed with wet, green WEEDS",["bong","flute","pipe","wetflute","weedeveryday"],_g);
 	return $r;
 }(this));
 adv_Thing.wetWeeds = (function($this) {
@@ -2408,7 +2453,7 @@ adv_Thing.yellowFlute = (function($this) {
 	} else {
 		_g.h["draw"] = "use";
 	}
-	$r = new adv_Thing("yellowFlute","YELLOWFLUTE","a FLUTE stuffed with dried yellow WEEDS",["bong","flute","pipe","yellowflute"],_g);
+	$r = new adv_Thing("yellowFlute","YELLOWFLUTE","a FLUTE stuffed with dried yellow WEEDS",["bong","flute","pipe","yellowflute","weedeveryday"],_g);
 	return $r;
 }(this));
 adv_Thing.yellowWeeds = (function($this) {
@@ -2466,6 +2511,31 @@ adv_Data.verbs = (function($this) {
 		_g.setReserved("act/give","die");
 	} else {
 		_g.h["act/give"] = "die";
+	}
+	if(__map_reserved["act/surrender"] != null) {
+		_g.setReserved("act/surrender","die");
+	} else {
+		_g.h["act/surrender"] = "die";
+	}
+	if(__map_reserved["act/masturbate"] != null) {
+		_g.setReserved("act/masturbate","fap");
+	} else {
+		_g.h["act/masturbate"] = "fap";
+	}
+	if(__map_reserved["act/masterbate"] != null) {
+		_g.setReserved("act/masterbate","fap");
+	} else {
+		_g.h["act/masterbate"] = "fap";
+	}
+	if(__map_reserved["act/jack"] != null) {
+		_g.setReserved("act/jack","fap");
+	} else {
+		_g.h["act/jack"] = "fap";
+	}
+	if(__map_reserved["act/wank"] != null) {
+		_g.setReserved("act/wank","fap");
+	} else {
+		_g.h["act/wank"] = "fap";
 	}
 	if(__map_reserved["act/grin"] != null) {
 		_g.setReserved("act/grin","laugh");
@@ -3737,11 +3807,13 @@ adv_Data.post = (function($this) {
 	if(__map_reserved["combine/flute/greenWeeds"] != null) {
 		_g.setReserved("combine/flute/greenWeeds",function(adv141) {
 			adv141.inv.remove(adv_Thing.flute);
+			adv141.inv.remove(adv_Thing.greenWeeds);
 			adv141.inv.add(adv_Thing.greenFlute);
 		});
 	} else {
 		_g.h["combine/flute/greenWeeds"] = function(adv141) {
 			adv141.inv.remove(adv_Thing.flute);
+			adv141.inv.remove(adv_Thing.greenWeeds);
 			adv141.inv.add(adv_Thing.greenFlute);
 		};
 	}
@@ -4046,237 +4118,215 @@ adv_Data.post = (function($this) {
 			adv441.inv.add(adv_Thing.flute);
 		};
 	}
-	if(__map_reserved["take/greenFlute"] != null) {
-		_g.setReserved("take/greenFlute",function(adv451) {
-			adv451.inv.remove(adv_Thing.greenFlute);
-			adv451.inv.add(adv_Thing.flute);
-		});
-	} else {
-		_g.h["take/greenFlute"] = function(adv451) {
-			adv451.inv.remove(adv_Thing.greenFlute);
-			adv451.inv.add(adv_Thing.flute);
-		};
-	}
-	if(__map_reserved["take/litGreenFlute"] != null) {
-		_g.setReserved("take/litGreenFlute",function(adv461) {
-			adv461.inv.remove(adv_Thing.litGreenFlute);
-			adv461.inv.add(adv_Thing.flute);
-		});
-	} else {
-		_g.h["take/litGreenFlute"] = function(adv461) {
-			adv461.inv.remove(adv_Thing.litGreenFlute);
-			adv461.inv.add(adv_Thing.flute);
-		};
-	}
 	if(__map_reserved["take/litYellowFlute"] != null) {
-		_g.setReserved("take/litYellowFlute",function(adv471) {
-			adv471.inv.remove(adv_Thing.litYellowFlute);
-			adv471.inv.add(adv_Thing.flute);
+		_g.setReserved("take/litYellowFlute",function(adv451) {
+			adv451.inv.remove(adv_Thing.litYellowFlute);
+			adv451.inv.add(adv_Thing.flute);
 		});
 	} else {
-		_g.h["take/litYellowFlute"] = function(adv471) {
-			adv471.inv.remove(adv_Thing.litYellowFlute);
-			adv471.inv.add(adv_Thing.flute);
+		_g.h["take/litYellowFlute"] = function(adv451) {
+			adv451.inv.remove(adv_Thing.litYellowFlute);
+			adv451.inv.add(adv_Thing.flute);
 		};
 	}
 	if(__map_reserved["take/shiny"] != null) {
-		_g.setReserved("take/shiny",function(adv481) {
-			adv481.room.remove(adv_Thing.shiny);
-			adv481.room.remove(adv_Thing.trash);
-			adv481.room.remove(adv_Thing.trashcan);
-			adv481.room.add(adv_Thing.fire);
+		_g.setReserved("take/shiny",function(adv461) {
+			adv461.room.remove(adv_Thing.shiny);
+			adv461.room.remove(adv_Thing.trash);
+			adv461.room.remove(adv_Thing.trashcan);
+			adv461.room.add(adv_Thing.fire);
 		});
 	} else {
-		_g.h["take/shiny"] = function(adv481) {
-			adv481.room.remove(adv_Thing.shiny);
-			adv481.room.remove(adv_Thing.trash);
-			adv481.room.remove(adv_Thing.trashcan);
-			adv481.room.add(adv_Thing.fire);
+		_g.h["take/shiny"] = function(adv461) {
+			adv461.room.remove(adv_Thing.shiny);
+			adv461.room.remove(adv_Thing.trash);
+			adv461.room.remove(adv_Thing.trashcan);
+			adv461.room.add(adv_Thing.fire);
 		};
 	}
 	if(__map_reserved["take/soot/[1]"] != null) {
-		_g.setReserved("take/soot/[1]",function(adv491) {
-			adv491.inv.add(adv_Thing.restroomkey);
-			adv491.inv.add(adv_Thing.ash);
+		_g.setReserved("take/soot/[1]",function(adv471) {
+			adv471.inv.add(adv_Thing.restroomkey);
+			adv471.inv.add(adv_Thing.ash);
 			var wipe1 = null;
 			var _g12 = 0;
 			var _g111 = [adv_Thing.pants,adv_Thing.shirt,adv_Thing.wetrag,adv_Thing.wetcloth];
 			while(_g12 < _g111.length) {
 				var t1 = _g111[_g12];
 				++_g12;
-				if(adv491.inv.has(t1)) {
+				if(adv471.inv.has(t1)) {
 					wipe1 = t1;
 				}
 			}
-			adv491.print("");
+			adv471.print("");
 			if(wipe1 != null) {
 				var gen1 = wipe1 == adv_Thing.pants ? "'" : "'s";
-				adv491.inv.remove(wipe1);
-				adv491.print("You use your " + wipe1.name + " to clean the ASH off of it, making it shiny again. You will always remember the " + wipe1.name + gen1 + " sacrifice.");
+				adv471.inv.remove(wipe1);
+				adv471.print("You use your " + wipe1.name + " to clean the ASH off of it, making it shiny again. You will always remember the " + wipe1.name + gen1 + " sacrifice.");
 			} else {
-				adv491.print("You dust the ASH off of it, making it shiny again.");
+				adv471.print("You dust the ASH off of it, making it shiny again.");
 			}
 		});
 	} else {
-		_g.h["take/soot/[1]"] = function(adv491) {
-			adv491.inv.add(adv_Thing.restroomkey);
-			adv491.inv.add(adv_Thing.ash);
+		_g.h["take/soot/[1]"] = function(adv471) {
+			adv471.inv.add(adv_Thing.restroomkey);
+			adv471.inv.add(adv_Thing.ash);
 			var wipe1 = null;
 			var _g12 = 0;
 			var _g111 = [adv_Thing.pants,adv_Thing.shirt,adv_Thing.wetrag,adv_Thing.wetcloth];
 			while(_g12 < _g111.length) {
 				var t1 = _g111[_g12];
 				++_g12;
-				if(adv491.inv.has(t1)) {
+				if(adv471.inv.has(t1)) {
 					wipe1 = t1;
 				}
 			}
-			adv491.print("");
+			adv471.print("");
 			if(wipe1 != null) {
 				var gen1 = wipe1 == adv_Thing.pants ? "'" : "'s";
-				adv491.inv.remove(wipe1);
-				adv491.print("You use your " + wipe1.name + " to clean the ASH off of it, making it shiny again. You will always remember the " + wipe1.name + gen1 + " sacrifice.");
+				adv471.inv.remove(wipe1);
+				adv471.print("You use your " + wipe1.name + " to clean the ASH off of it, making it shiny again. You will always remember the " + wipe1.name + gen1 + " sacrifice.");
 			} else {
-				adv491.print("You dust the ASH off of it, making it shiny again.");
+				adv471.print("You dust the ASH off of it, making it shiny again.");
 			}
 		};
 	}
 	if(__map_reserved["take/wetFlute"] != null) {
-		_g.setReserved("take/wetFlute",function(adv501) {
-			adv501.inv.remove(adv_Thing.wetFlute);
-			adv501.inv.add(adv_Thing.flute);
+		_g.setReserved("take/wetFlute",function(adv481) {
+			adv481.inv.remove(adv_Thing.wetFlute);
+			adv481.inv.add(adv_Thing.flute);
 		});
 	} else {
-		_g.h["take/wetFlute"] = function(adv501) {
-			adv501.inv.remove(adv_Thing.wetFlute);
-			adv501.inv.add(adv_Thing.flute);
+		_g.h["take/wetFlute"] = function(adv481) {
+			adv481.inv.remove(adv_Thing.wetFlute);
+			adv481.inv.add(adv_Thing.flute);
 		};
 	}
 	if(__map_reserved["take/yellowFlute"] != null) {
-		_g.setReserved("take/yellowFlute",function(adv521) {
-			adv521.inv.remove(adv_Thing.yellowFlute);
-			adv521.inv.add(adv_Thing.flute);
+		_g.setReserved("take/yellowFlute",function(adv491) {
+			adv491.inv.remove(adv_Thing.yellowFlute);
+			adv491.inv.add(adv_Thing.flute);
 		});
 	} else {
-		_g.h["take/yellowFlute"] = function(adv521) {
-			adv521.inv.remove(adv_Thing.yellowFlute);
-			adv521.inv.add(adv_Thing.flute);
+		_g.h["take/yellowFlute"] = function(adv491) {
+			adv491.inv.remove(adv_Thing.yellowFlute);
+			adv491.inv.add(adv_Thing.flute);
 		};
 	}
 	if(__map_reserved["take/yellowWeeds/[1]"] != null) {
-		_g.setReserved("take/yellowWeeds/[1]",function(adv531) {
-			adv531.room.remove(adv_Thing.yellowWeeds);
-			adv531.inv.add(adv_Thing.yellowWeeds);
+		_g.setReserved("take/yellowWeeds/[1]",function(adv501) {
+			adv501.room.remove(adv_Thing.yellowWeeds);
+			adv501.inv.add(adv_Thing.yellowWeeds);
 		});
 	} else {
-		_g.h["take/yellowWeeds/[1]"] = function(adv531) {
-			adv531.room.remove(adv_Thing.yellowWeeds);
-			adv531.inv.add(adv_Thing.yellowWeeds);
+		_g.h["take/yellowWeeds/[1]"] = function(adv501) {
+			adv501.room.remove(adv_Thing.yellowWeeds);
+			adv501.inv.add(adv_Thing.yellowWeeds);
 		};
 	}
 	if(__map_reserved["talk/dragon"] != null) {
-		_g.setReserved("talk/dragon",function(adv541) {
-			if(adv541.userData.dragonTalk == null) {
-				adv541.userData.dragonTalk = 0;
+		_g.setReserved("talk/dragon",function(adv521) {
+			if(adv521.userData.dragonTalk == null) {
+				adv521.userData.dragonTalk = 0;
 			}
-			if(adv541.userData.dragonTalk == 2) {
-				adv541.userData.expectNextFriends = true;
+			if(adv521.userData.dragonTalk == 2) {
+				adv521.userData.expectNextFriends = true;
 			} else {
-				adv541.userData.dragonTalk++;
+				adv521.userData.dragonTalk++;
 			}
 		});
 	} else {
-		_g.h["talk/dragon"] = function(adv541) {
-			if(adv541.userData.dragonTalk == null) {
-				adv541.userData.dragonTalk = 0;
+		_g.h["talk/dragon"] = function(adv521) {
+			if(adv521.userData.dragonTalk == null) {
+				adv521.userData.dragonTalk = 0;
 			}
-			if(adv541.userData.dragonTalk == 2) {
-				adv541.userData.expectNextFriends = true;
+			if(adv521.userData.dragonTalk == 2) {
+				adv521.userData.expectNextFriends = true;
 			} else {
-				adv541.userData.dragonTalk++;
+				adv521.userData.dragonTalk++;
 			}
 		};
 	}
 	if(__map_reserved["use/bowflex"] != null) {
-		_g.setReserved("use/bowflex",function(adv551) {
-			adv551.userData.strong = true;
+		_g.setReserved("use/bowflex",function(adv531) {
+			adv531.userData.strong = true;
 		});
 	} else {
-		_g.h["use/bowflex"] = function(adv551) {
-			adv551.userData.strong = true;
+		_g.h["use/bowflex"] = function(adv531) {
+			adv531.userData.strong = true;
 		};
 	}
 	if(__map_reserved["use/jerky"] != null) {
-		_g.setReserved("use/jerky",function(adv561) {
-			adv561.inv.remove(adv_Thing.jerky);
-			adv561.inv.add(adv_Thing.silicaGelPacket);
+		_g.setReserved("use/jerky",function(adv541) {
+			adv541.inv.remove(adv_Thing.jerky);
+			adv541.inv.add(adv_Thing.silicaGelPacket);
 		});
 	} else {
-		_g.h["use/jerky"] = function(adv561) {
-			adv561.inv.remove(adv_Thing.jerky);
-			adv561.inv.add(adv_Thing.silicaGelPacket);
+		_g.h["use/jerky"] = function(adv541) {
+			adv541.inv.remove(adv_Thing.jerky);
+			adv541.inv.add(adv_Thing.silicaGelPacket);
 		};
 	}
 	if(__map_reserved["use/lever"] != null) {
-		_g.setReserved("use/lever",function(adv571) {
-			if(adv571.room.has(adv_Thing._fixedPipes)) {
-				adv571.inv.remove(adv_Thing.restroom);
-				adv571.inv.remove(adv_Thing.temple);
-				adv571.inv.remove(adv_Thing.cafeteria);
-				adv571.inv.remove(adv_Thing.souvenierShop);
-				adv571.inv.remove(adv_Thing.secretPassage);
-				adv571.setRoom("bossRoom");
+		_g.setReserved("use/lever",function(adv551) {
+			if(adv551.room.has(adv_Thing._fixedPipes)) {
+				adv551.inv.remove(adv_Thing.restroom);
+				adv551.inv.remove(adv_Thing.temple);
+				adv551.inv.remove(adv_Thing.cafeteria);
+				adv551.inv.remove(adv_Thing.souvenierShop);
+				adv551.inv.remove(adv_Thing.secretPassage);
+				adv551.setRoom("bossRoom");
 			}
 		});
 	} else {
-		_g.h["use/lever"] = function(adv571) {
-			if(adv571.room.has(adv_Thing._fixedPipes)) {
-				adv571.inv.remove(adv_Thing.restroom);
-				adv571.inv.remove(adv_Thing.temple);
-				adv571.inv.remove(adv_Thing.cafeteria);
-				adv571.inv.remove(adv_Thing.souvenierShop);
-				adv571.inv.remove(adv_Thing.secretPassage);
-				adv571.setRoom("bossRoom");
+		_g.h["use/lever"] = function(adv551) {
+			if(adv551.room.has(adv_Thing._fixedPipes)) {
+				adv551.inv.remove(adv_Thing.restroom);
+				adv551.inv.remove(adv_Thing.temple);
+				adv551.inv.remove(adv_Thing.cafeteria);
+				adv551.inv.remove(adv_Thing.souvenierShop);
+				adv551.inv.remove(adv_Thing.secretPassage);
+				adv551.setRoom("bossRoom");
 			}
 		};
 	}
 	if(__map_reserved["use/litGreenFlute"] != null) {
-		_g.setReserved("use/litGreenFlute",function(adv581) {
-			adv581.inv.remove(adv_Thing.litGreenFlute);
-			adv581.inv.remove(adv_Thing.greenWeeds);
-			adv581.scene.trip = true;
-			adv581.scene.wait();
-			adv581.print("Whoah.");
+		_g.setReserved("use/litGreenFlute",function(adv561) {
+			adv561.inv.remove(adv_Thing.litGreenFlute);
+			adv561.inv.remove(adv_Thing.greenWeeds);
+			adv561.scene.trip = true;
+			adv561.scene.wait();
+			adv561.print("Whoah.");
 		});
 	} else {
-		_g.h["use/litGreenFlute"] = function(adv581) {
-			adv581.inv.remove(adv_Thing.litGreenFlute);
-			adv581.inv.remove(adv_Thing.greenWeeds);
-			adv581.scene.trip = true;
-			adv581.scene.wait();
-			adv581.print("Whoah.");
+		_g.h["use/litGreenFlute"] = function(adv561) {
+			adv561.inv.remove(adv_Thing.litGreenFlute);
+			adv561.inv.remove(adv_Thing.greenWeeds);
+			adv561.scene.trip = true;
+			adv561.scene.wait();
+			adv561.print("Whoah.");
 		};
 	}
 	if(__map_reserved["use/litYellowFlute"] != null) {
-		_g.setReserved("use/litYellowFlute",function(adv591) {
-			adv591.inv.remove(adv_Thing.litYellowFlute);
-			adv591.inv.add(adv_Thing.flute);
+		_g.setReserved("use/litYellowFlute",function(adv571) {
+			adv571.inv.remove(adv_Thing.litYellowFlute);
+			adv571.inv.add(adv_Thing.flute);
 		});
 	} else {
-		_g.h["use/litYellowFlute"] = function(adv591) {
-			adv591.inv.remove(adv_Thing.litYellowFlute);
-			adv591.inv.add(adv_Thing.flute);
+		_g.h["use/litYellowFlute"] = function(adv571) {
+			adv571.inv.remove(adv_Thing.litYellowFlute);
+			adv571.inv.add(adv_Thing.flute);
 		};
 	}
 	if(__map_reserved["use/slapChop"] != null) {
-		_g.setReserved("use/slapChop",function(adv601) {
-			adv601.room.remove(adv_Thing.slapChop);
-			adv601.room.add(adv_Thing._bladeInTable);
+		_g.setReserved("use/slapChop",function(adv581) {
+			adv581.room.remove(adv_Thing.slapChop);
+			adv581.room.add(adv_Thing._bladeInTable);
 		});
 	} else {
-		_g.h["use/slapChop"] = function(adv601) {
-			adv601.room.remove(adv_Thing.slapChop);
-			adv601.room.add(adv_Thing._bladeInTable);
+		_g.h["use/slapChop"] = function(adv581) {
+			adv581.room.remove(adv_Thing.slapChop);
+			adv581.room.add(adv_Thing._bladeInTable);
 		};
 	}
 	if(__map_reserved["_DUMMY"] != null) {
@@ -4291,3835 +4341,3851 @@ adv_Data.messages = (function($this) {
 	var $r;
 	var _g = new haxe_ds_StringMap();
 	{
-		var value = ["FRED is very happy about that, he was starving. He invites you to ride on his back. He turns towards the exit and puts his tail in front of you to climb aboard."];
+		var value = ["Ew.","Keep it family-friendly.","That's some language you got on you.","I'm not going to comment on that verbiage.","Vulgar statement is insufficiently polite."];
+		if(__map_reserved["onProfanity"] != null) {
+			_g.setReserved("onProfanity",value);
+		} else {
+			_g.h["onProfanity"] = value;
+		}
+	}
+	{
+		var value1 = ["FRED is very happy about that, he was starving. He invites you to ride on his back. He turns towards the exit and puts his tail in front of you to climb aboard."];
 		if(__map_reserved["befriendDragon1"] != null) {
-			_g.setReserved("befriendDragon1",value);
+			_g.setReserved("befriendDragon1",value1);
 		} else {
-			_g.h["befriendDragon1"] = value;
+			_g.h["befriendDragon1"] = value1;
 		}
 	}
 	{
-		var value1 = ["You get up on FRED's back and he flies out of the exit of the cave. You two soar high above the clouds under the afternoon sun, while FRED clutches the greeting card from his mom with the twenty dollars of lunch money inside. The people at the drive-through stare in awe at the large dragon coming through, humming a cheerful tune to himself, and even more at how many milk shakes he gets for you two."];
+		var value2 = ["You get up on FRED's back and he flies out of the exit of the cave. You two soar high above the clouds under the afternoon sun, while FRED clutches the greeting card from his mom with the twenty dollars of lunch money inside. The people at the drive-through stare in awe at the large dragon coming through, humming a cheerful tune to himself, and even more at how many milk shakes he gets for you two."];
 		if(__map_reserved["befriendDragon2"] != null) {
-			_g.setReserved("befriendDragon2",value1);
+			_g.setReserved("befriendDragon2",value2);
 		} else {
-			_g.h["befriendDragon2"] = value1;
+			_g.h["befriendDragon2"] = value2;
 		}
 	}
 	{
-		var value2 = ["After lunch, FRED and you are way too full to go back and have a boss fight together. So you agree to just postpone that indefinitely and go home instead, to get some more comfortable (or in your case, any at all) clothes on. FRED thinks that milkshakes and a nap are a much nicer end to an adventure than beating someone up anyway, and you can't disagree with that."];
+		var value3 = ["After lunch, FRED and you are way too full to go back and have a boss fight together. So you agree to just postpone that indefinitely and go home instead, to get some more comfortable (or in your case, any at all) clothes on. FRED thinks that milkshakes and a nap are a much nicer end to an adventure than beating someone up anyway, and you can't disagree with that."];
 		if(__map_reserved["befriendDragon3"] != null) {
-			_g.setReserved("befriendDragon3",value2);
+			_g.setReserved("befriendDragon3",value3);
 		} else {
-			_g.h["befriendDragon3"] = value2;
+			_g.h["befriendDragon3"] = value3;
 		}
 	}
 	{
-		var value3 = ["And the LAMP's bulb begins to glow! Although don't get to excited, the glow is extremely dim, the filament is barely red."];
+		var value4 = ["And the LAMP's bulb begins to glow! Although don't get to excited, the glow is extremely dim, the filament is barely red."];
 		if(__map_reserved["clapper1"] != null) {
-			_g.setReserved("clapper1",value3);
+			_g.setReserved("clapper1",value4);
 		} else {
-			_g.h["clapper1"] = value3;
+			_g.h["clapper1"] = value4;
 		}
 	}
 	{
-		var value4 = ["The LAMP begins to glow ever so slightly more. It's still really dim though."];
+		var value5 = ["The LAMP begins to glow ever so slightly more. It's still really dim though."];
 		if(__map_reserved["clapper2"] != null) {
-			_g.setReserved("clapper2",value4);
+			_g.setReserved("clapper2",value5);
 		} else {
-			_g.h["clapper2"] = value4;
+			_g.h["clapper2"] = value5;
 		}
 	}
 	{
-		var value5 = ["The LAMP starts to glow properly bright now. And it keeps getting brighter until the bulb suddenly explodes in a mist of broken glass! As you open your eyes again, you see that most of the bulb has disintegrated and the filament has been exposed, which is now spraying SPARKS everywhere."];
+		var value6 = ["The LAMP starts to glow properly bright now. And it keeps getting brighter until the bulb suddenly explodes in a mist of broken glass! As you open your eyes again, you see that most of the bulb has disintegrated and the filament has been exposed, which is now spraying SPARKS everywhere."];
 		if(__map_reserved["clapper3"] != null) {
-			_g.setReserved("clapper3",value5);
+			_g.setReserved("clapper3",value6);
 		} else {
-			_g.h["clapper3"] = value5;
+			_g.h["clapper3"] = value6;
 		}
 	}
 	{
-		var value6 = ["The LAMP doesn't react to you anymore and SPARKS are still happily flying from it. The explosion probably broke the sensor."];
+		var value7 = ["The LAMP doesn't react to you anymore and SPARKS are still happily flying from it. The explosion probably broke the sensor."];
 		if(__map_reserved["clapper4"] != null) {
-			_g.setReserved("clapper4",value6);
+			_g.setReserved("clapper4",value7);
 		} else {
-			_g.h["clapper4"] = value6;
+			_g.h["clapper4"] = value7;
 		}
 	}
 	{
-		var value7 = ["Inside a small, confined room is not a good place to ride a DRAGON."];
+		var value8 = ["Inside a small, confined room is not a good place to ride a DRAGON."];
 		if(__map_reserved["climb/dragon"] != null) {
-			_g.setReserved("climb/dragon",value7);
+			_g.setReserved("climb/dragon",value8);
 		} else {
-			_g.h["climb/dragon"] = value7;
+			_g.h["climb/dragon"] = value8;
 		}
 	}
 	{
-		var value8 = ["There's nothing you could hold onto to do that."];
+		var value9 = ["There's nothing you could hold onto to do that."];
 		if(__map_reserved["climb/painting"] != null) {
-			_g.setReserved("climb/painting",value8);
+			_g.setReserved("climb/painting",value9);
 		} else {
-			_g.h["climb/painting"] = value8;
+			_g.h["climb/painting"] = value9;
 		}
 	}
 	{
-		var value9 = ["It doesn't look like it would support your weight."];
+		var value10 = ["It doesn't look like it would support your weight."];
 		if(__map_reserved["climb/table"] != null) {
-			_g.setReserved("climb/table",value9);
+			_g.setReserved("climb/table",value10);
 		} else {
-			_g.h["climb/table"] = value9;
+			_g.h["climb/table"] = value10;
 		}
 	}
 	{
-		var value10 = ["You'd rather not stick anything else in there, these things don't give change."];
+		var value11 = ["You'd rather not stick anything else in there, these things don't give change."];
 		if(__map_reserved["combine/_emptyMachine"] != null) {
-			_g.setReserved("combine/_emptyMachine",value10);
+			_g.setReserved("combine/_emptyMachine",value11);
 		} else {
-			_g.h["combine/_emptyMachine"] = value10;
+			_g.h["combine/_emptyMachine"] = value11;
 		}
 	}
 	{
-		var value11 = ["That won't help you fix the PIPES."];
+		var value12 = ["That won't help you fix the PIPES."];
 		if(__map_reserved["combine/_fixedPipes"] != null) {
-			_g.setReserved("combine/_fixedPipes",value11);
+			_g.setReserved("combine/_fixedPipes",value12);
 		} else {
-			_g.h["combine/_fixedPipes"] = value11;
-		}
-	}
-	{
-		var value12 = ["Trying to patch up a hole with a holey FLUTE will never work."];
-		if(__map_reserved["combine/_fixedPipes/flute"] != null) {
-			_g.setReserved("combine/_fixedPipes/flute",value12);
-		} else {
-			_g.h["combine/_fixedPipes/flute"] = value12;
+			_g.h["combine/_fixedPipes"] = value12;
 		}
 	}
 	{
 		var value13 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		if(__map_reserved["combine/_fixedPipes/flute"] != null) {
+			_g.setReserved("combine/_fixedPipes/flute",value13);
+		} else {
+			_g.h["combine/_fixedPipes/flute"] = value13;
+		}
+	}
+	{
+		var value14 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_fixedPipes/greenFlute"] != null) {
-			_g.setReserved("combine/_fixedPipes/greenFlute",value13);
+			_g.setReserved("combine/_fixedPipes/greenFlute",value14);
 		} else {
-			_g.h["combine/_fixedPipes/greenFlute"] = value13;
+			_g.h["combine/_fixedPipes/greenFlute"] = value14;
 		}
 	}
 	{
-		var value14 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value15 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_fixedPipes/greenWeeds"] != null) {
-			_g.setReserved("combine/_fixedPipes/greenWeeds",value14);
+			_g.setReserved("combine/_fixedPipes/greenWeeds",value15);
 		} else {
-			_g.h["combine/_fixedPipes/greenWeeds"] = value14;
+			_g.h["combine/_fixedPipes/greenWeeds"] = value15;
 		}
 	}
 	{
-		var value15 = ["The CHEWING GUM is rock hard, it's useless as a patch."];
+		var value16 = ["The CHEWING GUM is rock hard, it's useless as a patch."];
 		if(__map_reserved["combine/_fixedPipes/hardGum"] != null) {
-			_g.setReserved("combine/_fixedPipes/hardGum",value15);
+			_g.setReserved("combine/_fixedPipes/hardGum",value16);
 		} else {
-			_g.h["combine/_fixedPipes/hardGum"] = value15;
-		}
-	}
-	{
-		var value16 = ["Trying to patch up a hole with a holey FLUTE will never work."];
-		if(__map_reserved["combine/_fixedPipes/litGreenFlute"] != null) {
-			_g.setReserved("combine/_fixedPipes/litGreenFlute",value16);
-		} else {
-			_g.h["combine/_fixedPipes/litGreenFlute"] = value16;
+			_g.h["combine/_fixedPipes/hardGum"] = value16;
 		}
 	}
 	{
 		var value17 = ["Trying to patch up a hole with a holey FLUTE will never work."];
-		if(__map_reserved["combine/_fixedPipes/litYellowFlute"] != null) {
-			_g.setReserved("combine/_fixedPipes/litYellowFlute",value17);
+		if(__map_reserved["combine/_fixedPipes/litGreenFlute"] != null) {
+			_g.setReserved("combine/_fixedPipes/litGreenFlute",value17);
 		} else {
-			_g.h["combine/_fixedPipes/litYellowFlute"] = value17;
+			_g.h["combine/_fixedPipes/litGreenFlute"] = value17;
 		}
 	}
 	{
 		var value18 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		if(__map_reserved["combine/_fixedPipes/litYellowFlute"] != null) {
+			_g.setReserved("combine/_fixedPipes/litYellowFlute",value18);
+		} else {
+			_g.h["combine/_fixedPipes/litYellowFlute"] = value18;
+		}
+	}
+	{
+		var value19 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_fixedPipes/wetFlute"] != null) {
-			_g.setReserved("combine/_fixedPipes/wetFlute",value18);
+			_g.setReserved("combine/_fixedPipes/wetFlute",value19);
 		} else {
-			_g.h["combine/_fixedPipes/wetFlute"] = value18;
+			_g.h["combine/_fixedPipes/wetFlute"] = value19;
 		}
 	}
 	{
-		var value19 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value20 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_fixedPipes/wetWeeds"] != null) {
-			_g.setReserved("combine/_fixedPipes/wetWeeds",value19);
+			_g.setReserved("combine/_fixedPipes/wetWeeds",value20);
 		} else {
-			_g.h["combine/_fixedPipes/wetWeeds"] = value19;
+			_g.h["combine/_fixedPipes/wetWeeds"] = value20;
 		}
 	}
 	{
-		var value20 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		var value21 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_fixedPipes/yellowFlute"] != null) {
-			_g.setReserved("combine/_fixedPipes/yellowFlute",value20);
+			_g.setReserved("combine/_fixedPipes/yellowFlute",value21);
 		} else {
-			_g.h["combine/_fixedPipes/yellowFlute"] = value20;
+			_g.h["combine/_fixedPipes/yellowFlute"] = value21;
 		}
 	}
 	{
-		var value21 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value22 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_fixedPipes/yellowWeeds"] != null) {
-			_g.setReserved("combine/_fixedPipes/yellowWeeds",value21);
+			_g.setReserved("combine/_fixedPipes/yellowWeeds",value22);
 		} else {
-			_g.h["combine/_fixedPipes/yellowWeeds"] = value21;
+			_g.h["combine/_fixedPipes/yellowWeeds"] = value22;
 		}
 	}
 	{
-		var value22 = ["That won't help you fix the PIPES."];
+		var value23 = ["That won't help you fix the PIPES."];
 		if(__map_reserved["combine/_gumPipes"] != null) {
-			_g.setReserved("combine/_gumPipes",value22);
+			_g.setReserved("combine/_gumPipes",value23);
 		} else {
-			_g.h["combine/_gumPipes"] = value22;
-		}
-	}
-	{
-		var value23 = ["Trying to patch up a hole with a holey FLUTE will never work."];
-		if(__map_reserved["combine/_gumPipes/flute"] != null) {
-			_g.setReserved("combine/_gumPipes/flute",value23);
-		} else {
-			_g.h["combine/_gumPipes/flute"] = value23;
+			_g.h["combine/_gumPipes"] = value23;
 		}
 	}
 	{
 		var value24 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		if(__map_reserved["combine/_gumPipes/flute"] != null) {
+			_g.setReserved("combine/_gumPipes/flute",value24);
+		} else {
+			_g.h["combine/_gumPipes/flute"] = value24;
+		}
+	}
+	{
+		var value25 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_gumPipes/greenFlute"] != null) {
-			_g.setReserved("combine/_gumPipes/greenFlute",value24);
+			_g.setReserved("combine/_gumPipes/greenFlute",value25);
 		} else {
-			_g.h["combine/_gumPipes/greenFlute"] = value24;
+			_g.h["combine/_gumPipes/greenFlute"] = value25;
 		}
 	}
 	{
-		var value25 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value26 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_gumPipes/greenWeeds"] != null) {
-			_g.setReserved("combine/_gumPipes/greenWeeds",value25);
+			_g.setReserved("combine/_gumPipes/greenWeeds",value26);
 		} else {
-			_g.h["combine/_gumPipes/greenWeeds"] = value25;
+			_g.h["combine/_gumPipes/greenWeeds"] = value26;
 		}
 	}
 	{
-		var value26 = ["The CHEWING GUM is rock hard, it's useless as a patch."];
+		var value27 = ["The CHEWING GUM is rock hard, it's useless as a patch."];
 		if(__map_reserved["combine/_gumPipes/hardGum"] != null) {
-			_g.setReserved("combine/_gumPipes/hardGum",value26);
+			_g.setReserved("combine/_gumPipes/hardGum",value27);
 		} else {
-			_g.h["combine/_gumPipes/hardGum"] = value26;
-		}
-	}
-	{
-		var value27 = ["Trying to patch up a hole with a holey FLUTE will never work."];
-		if(__map_reserved["combine/_gumPipes/litGreenFlute"] != null) {
-			_g.setReserved("combine/_gumPipes/litGreenFlute",value27);
-		} else {
-			_g.h["combine/_gumPipes/litGreenFlute"] = value27;
+			_g.h["combine/_gumPipes/hardGum"] = value27;
 		}
 	}
 	{
 		var value28 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		if(__map_reserved["combine/_gumPipes/litGreenFlute"] != null) {
+			_g.setReserved("combine/_gumPipes/litGreenFlute",value28);
+		} else {
+			_g.h["combine/_gumPipes/litGreenFlute"] = value28;
+		}
+	}
+	{
+		var value29 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_gumPipes/litYellowFlute"] != null) {
-			_g.setReserved("combine/_gumPipes/litYellowFlute",value28);
+			_g.setReserved("combine/_gumPipes/litYellowFlute",value29);
 		} else {
-			_g.h["combine/_gumPipes/litYellowFlute"] = value28;
+			_g.h["combine/_gumPipes/litYellowFlute"] = value29;
 		}
 	}
 	{
-		var value29 = ["You stick your rusty NAIL into the hole in the PIPES. It fits pretty well, and the CHEWING GUM makes an alright seal, if you completely disregard the safety of the large hydraulic mechanism."];
+		var value30 = ["You stick your rusty NAIL into the hole in the PIPES. It fits pretty well, and the CHEWING GUM makes an alright seal, if you completely disregard the safety of the large hydraulic mechanism."];
 		if(__map_reserved["combine/_gumPipes/nail"] != null) {
-			_g.setReserved("combine/_gumPipes/nail",value29);
+			_g.setReserved("combine/_gumPipes/nail",value30);
 		} else {
-			_g.h["combine/_gumPipes/nail"] = value29;
+			_g.h["combine/_gumPipes/nail"] = value30;
 		}
 	}
 	{
-		var value30 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		var value31 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_gumPipes/wetFlute"] != null) {
-			_g.setReserved("combine/_gumPipes/wetFlute",value30);
+			_g.setReserved("combine/_gumPipes/wetFlute",value31);
 		} else {
-			_g.h["combine/_gumPipes/wetFlute"] = value30;
+			_g.h["combine/_gumPipes/wetFlute"] = value31;
 		}
 	}
 	{
-		var value31 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value32 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_gumPipes/wetWeeds"] != null) {
-			_g.setReserved("combine/_gumPipes/wetWeeds",value31);
+			_g.setReserved("combine/_gumPipes/wetWeeds",value32);
 		} else {
-			_g.h["combine/_gumPipes/wetWeeds"] = value31;
+			_g.h["combine/_gumPipes/wetWeeds"] = value32;
 		}
 	}
 	{
-		var value32 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		var value33 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_gumPipes/yellowFlute"] != null) {
-			_g.setReserved("combine/_gumPipes/yellowFlute",value32);
+			_g.setReserved("combine/_gumPipes/yellowFlute",value33);
 		} else {
-			_g.h["combine/_gumPipes/yellowFlute"] = value32;
+			_g.h["combine/_gumPipes/yellowFlute"] = value33;
 		}
 	}
 	{
-		var value33 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value34 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_gumPipes/yellowWeeds"] != null) {
-			_g.setReserved("combine/_gumPipes/yellowWeeds",value33);
+			_g.setReserved("combine/_gumPipes/yellowWeeds",value34);
 		} else {
-			_g.h["combine/_gumPipes/yellowWeeds"] = value33;
+			_g.h["combine/_gumPipes/yellowWeeds"] = value34;
 		}
 	}
 	{
-		var value34 = ["That won't help you fix the PIPES."];
+		var value35 = ["That won't help you fix the PIPES."];
 		if(__map_reserved["combine/_holePipes"] != null) {
-			_g.setReserved("combine/_holePipes",value34);
+			_g.setReserved("combine/_holePipes",value35);
 		} else {
-			_g.h["combine/_holePipes"] = value34;
-		}
-	}
-	{
-		var value35 = ["Trying to patch up a hole with a holey FLUTE will never work."];
-		if(__map_reserved["combine/_holePipes/flute"] != null) {
-			_g.setReserved("combine/_holePipes/flute",value35);
-		} else {
-			_g.h["combine/_holePipes/flute"] = value35;
+			_g.h["combine/_holePipes"] = value35;
 		}
 	}
 	{
 		var value36 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		if(__map_reserved["combine/_holePipes/flute"] != null) {
+			_g.setReserved("combine/_holePipes/flute",value36);
+		} else {
+			_g.h["combine/_holePipes/flute"] = value36;
+		}
+	}
+	{
+		var value37 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_holePipes/greenFlute"] != null) {
-			_g.setReserved("combine/_holePipes/greenFlute",value36);
+			_g.setReserved("combine/_holePipes/greenFlute",value37);
 		} else {
-			_g.h["combine/_holePipes/greenFlute"] = value36;
+			_g.h["combine/_holePipes/greenFlute"] = value37;
 		}
 	}
 	{
-		var value37 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value38 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_holePipes/greenWeeds"] != null) {
-			_g.setReserved("combine/_holePipes/greenWeeds",value37);
+			_g.setReserved("combine/_holePipes/greenWeeds",value38);
 		} else {
-			_g.h["combine/_holePipes/greenWeeds"] = value37;
+			_g.h["combine/_holePipes/greenWeeds"] = value38;
 		}
 	}
 	{
-		var value38 = ["The CHEWING GUM is rock hard, it's useless as a patch."];
+		var value39 = ["The CHEWING GUM is rock hard, it's useless as a patch."];
 		if(__map_reserved["combine/_holePipes/hardGum"] != null) {
-			_g.setReserved("combine/_holePipes/hardGum",value38);
+			_g.setReserved("combine/_holePipes/hardGum",value39);
 		} else {
-			_g.h["combine/_holePipes/hardGum"] = value38;
-		}
-	}
-	{
-		var value39 = ["Trying to patch up a hole with a holey FLUTE will never work."];
-		if(__map_reserved["combine/_holePipes/litGreenFlute"] != null) {
-			_g.setReserved("combine/_holePipes/litGreenFlute",value39);
-		} else {
-			_g.h["combine/_holePipes/litGreenFlute"] = value39;
+			_g.h["combine/_holePipes/hardGum"] = value39;
 		}
 	}
 	{
 		var value40 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		if(__map_reserved["combine/_holePipes/litGreenFlute"] != null) {
+			_g.setReserved("combine/_holePipes/litGreenFlute",value40);
+		} else {
+			_g.h["combine/_holePipes/litGreenFlute"] = value40;
+		}
+	}
+	{
+		var value41 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_holePipes/litYellowFlute"] != null) {
-			_g.setReserved("combine/_holePipes/litYellowFlute",value40);
+			_g.setReserved("combine/_holePipes/litYellowFlute",value41);
 		} else {
-			_g.h["combine/_holePipes/litYellowFlute"] = value40;
+			_g.h["combine/_holePipes/litYellowFlute"] = value41;
 		}
 	}
 	{
-		var value41 = ["You stick your rusty NAIL into the hole in the PIPES. It fits pretty well, but it doesn't seal it well. There's little gaps and cracks where the steam can still escape."];
+		var value42 = ["You stick your rusty NAIL into the hole in the PIPES. It fits pretty well, but it doesn't seal it well. There's little gaps and cracks where the steam can still escape."];
 		if(__map_reserved["combine/_holePipes/nail"] != null) {
-			_g.setReserved("combine/_holePipes/nail",value41);
+			_g.setReserved("combine/_holePipes/nail",value42);
 		} else {
-			_g.h["combine/_holePipes/nail"] = value41;
+			_g.h["combine/_holePipes/nail"] = value42;
 		}
 	}
 	{
-		var value42 = ["You stick your makeshift PLUG into the hole in the PIPES. It seems to make an alright seal, if you completely disregard the safety of the large hydraulic mechanism."];
+		var value43 = ["You stick your makeshift PLUG into the hole in the PIPES. It seems to make an alright seal, if you completely disregard the safety of the large hydraulic mechanism."];
 		if(__map_reserved["combine/_holePipes/plug"] != null) {
-			_g.setReserved("combine/_holePipes/plug",value42);
+			_g.setReserved("combine/_holePipes/plug",value43);
 		} else {
-			_g.h["combine/_holePipes/plug"] = value42;
+			_g.h["combine/_holePipes/plug"] = value43;
 		}
 	}
 	{
-		var value43 = ["You take your CHEWING GUM out of your mouth and try to cover the hole in the PIPES with it. However, you don't nearly have enough, so you basically just covered the rim with it."];
+		var value44 = ["You take your CHEWING GUM out of your mouth and try to cover the hole in the PIPES with it. However, you don't nearly have enough, so you basically just covered the rim with it."];
 		if(__map_reserved["combine/_holePipes/softGum"] != null) {
-			_g.setReserved("combine/_holePipes/softGum",value43);
+			_g.setReserved("combine/_holePipes/softGum",value44);
 		} else {
-			_g.h["combine/_holePipes/softGum"] = value43;
+			_g.h["combine/_holePipes/softGum"] = value44;
 		}
 	}
 	{
-		var value44 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		var value45 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_holePipes/wetFlute"] != null) {
-			_g.setReserved("combine/_holePipes/wetFlute",value44);
+			_g.setReserved("combine/_holePipes/wetFlute",value45);
 		} else {
-			_g.h["combine/_holePipes/wetFlute"] = value44;
+			_g.h["combine/_holePipes/wetFlute"] = value45;
 		}
 	}
 	{
-		var value45 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value46 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_holePipes/wetWeeds"] != null) {
-			_g.setReserved("combine/_holePipes/wetWeeds",value45);
+			_g.setReserved("combine/_holePipes/wetWeeds",value46);
 		} else {
-			_g.h["combine/_holePipes/wetWeeds"] = value45;
+			_g.h["combine/_holePipes/wetWeeds"] = value46;
 		}
 	}
 	{
-		var value46 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		var value47 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_holePipes/yellowFlute"] != null) {
-			_g.setReserved("combine/_holePipes/yellowFlute",value46);
+			_g.setReserved("combine/_holePipes/yellowFlute",value47);
 		} else {
-			_g.h["combine/_holePipes/yellowFlute"] = value46;
+			_g.h["combine/_holePipes/yellowFlute"] = value47;
 		}
 	}
 	{
-		var value47 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value48 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_holePipes/yellowWeeds"] != null) {
-			_g.setReserved("combine/_holePipes/yellowWeeds",value47);
+			_g.setReserved("combine/_holePipes/yellowWeeds",value48);
 		} else {
-			_g.h["combine/_holePipes/yellowWeeds"] = value47;
+			_g.h["combine/_holePipes/yellowWeeds"] = value48;
 		}
 	}
 	{
-		var value48 = ["You need to get it out of the VENDING MACHINE to do anything to it."];
+		var value49 = ["You need to get it out of the VENDING MACHINE to do anything to it."];
 		if(__map_reserved["combine/_jerkyInMachine"] != null) {
-			_g.setReserved("combine/_jerkyInMachine",value48);
+			_g.setReserved("combine/_jerkyInMachine",value49);
 		} else {
-			_g.h["combine/_jerkyInMachine"] = value48;
+			_g.h["combine/_jerkyInMachine"] = value49;
 		}
 	}
 	{
-		var value49 = ["That won't help you reach the NAIL."];
+		var value50 = ["That won't help you reach the NAIL."];
 		if(__map_reserved["combine/_nailInWall"] != null) {
-			_g.setReserved("combine/_nailInWall",value49);
+			_g.setReserved("combine/_nailInWall",value50);
 		} else {
-			_g.h["combine/_nailInWall"] = value49;
+			_g.h["combine/_nailInWall"] = value50;
 		}
 	}
 	{
-		var value50 = ["That won't help you fix the PIPES."];
+		var value51 = ["That won't help you fix the PIPES."];
 		if(__map_reserved["combine/_nailPipes"] != null) {
-			_g.setReserved("combine/_nailPipes",value50);
+			_g.setReserved("combine/_nailPipes",value51);
 		} else {
-			_g.h["combine/_nailPipes"] = value50;
-		}
-	}
-	{
-		var value51 = ["Trying to patch up a hole with a holey FLUTE will never work."];
-		if(__map_reserved["combine/_nailPipes/flute"] != null) {
-			_g.setReserved("combine/_nailPipes/flute",value51);
-		} else {
-			_g.h["combine/_nailPipes/flute"] = value51;
+			_g.h["combine/_nailPipes"] = value51;
 		}
 	}
 	{
 		var value52 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		if(__map_reserved["combine/_nailPipes/flute"] != null) {
+			_g.setReserved("combine/_nailPipes/flute",value52);
+		} else {
+			_g.h["combine/_nailPipes/flute"] = value52;
+		}
+	}
+	{
+		var value53 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_nailPipes/greenFlute"] != null) {
-			_g.setReserved("combine/_nailPipes/greenFlute",value52);
+			_g.setReserved("combine/_nailPipes/greenFlute",value53);
 		} else {
-			_g.h["combine/_nailPipes/greenFlute"] = value52;
+			_g.h["combine/_nailPipes/greenFlute"] = value53;
 		}
 	}
 	{
-		var value53 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value54 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_nailPipes/greenWeeds"] != null) {
-			_g.setReserved("combine/_nailPipes/greenWeeds",value53);
+			_g.setReserved("combine/_nailPipes/greenWeeds",value54);
 		} else {
-			_g.h["combine/_nailPipes/greenWeeds"] = value53;
+			_g.h["combine/_nailPipes/greenWeeds"] = value54;
 		}
 	}
 	{
-		var value54 = ["The CHEWING GUM is rock hard, it's useless as a patch."];
+		var value55 = ["The CHEWING GUM is rock hard, it's useless as a patch."];
 		if(__map_reserved["combine/_nailPipes/hardGum"] != null) {
-			_g.setReserved("combine/_nailPipes/hardGum",value54);
+			_g.setReserved("combine/_nailPipes/hardGum",value55);
 		} else {
-			_g.h["combine/_nailPipes/hardGum"] = value54;
-		}
-	}
-	{
-		var value55 = ["Trying to patch up a hole with a holey FLUTE will never work."];
-		if(__map_reserved["combine/_nailPipes/litGreenFlute"] != null) {
-			_g.setReserved("combine/_nailPipes/litGreenFlute",value55);
-		} else {
-			_g.h["combine/_nailPipes/litGreenFlute"] = value55;
+			_g.h["combine/_nailPipes/hardGum"] = value55;
 		}
 	}
 	{
 		var value56 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		if(__map_reserved["combine/_nailPipes/litGreenFlute"] != null) {
+			_g.setReserved("combine/_nailPipes/litGreenFlute",value56);
+		} else {
+			_g.h["combine/_nailPipes/litGreenFlute"] = value56;
+		}
+	}
+	{
+		var value57 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_nailPipes/litYellowFlute"] != null) {
-			_g.setReserved("combine/_nailPipes/litYellowFlute",value56);
+			_g.setReserved("combine/_nailPipes/litYellowFlute",value57);
 		} else {
-			_g.h["combine/_nailPipes/litYellowFlute"] = value56;
+			_g.h["combine/_nailPipes/litYellowFlute"] = value57;
 		}
 	}
 	{
-		var value57 = ["You take your CHEWING GUM out of your mouth and stick it around the edge of the rusty NAIL. It makes an alright seal around the hole in the PIPES, if you completely disregard the safety of the large hydraulic mechanism."];
+		var value58 = ["You take your CHEWING GUM out of your mouth and stick it around the edge of the rusty NAIL. It makes an alright seal around the hole in the PIPES, if you completely disregard the safety of the large hydraulic mechanism."];
 		if(__map_reserved["combine/_nailPipes/softGum"] != null) {
-			_g.setReserved("combine/_nailPipes/softGum",value57);
+			_g.setReserved("combine/_nailPipes/softGum",value58);
 		} else {
-			_g.h["combine/_nailPipes/softGum"] = value57;
+			_g.h["combine/_nailPipes/softGum"] = value58;
 		}
 	}
 	{
-		var value58 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		var value59 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_nailPipes/wetFlute"] != null) {
-			_g.setReserved("combine/_nailPipes/wetFlute",value58);
+			_g.setReserved("combine/_nailPipes/wetFlute",value59);
 		} else {
-			_g.h["combine/_nailPipes/wetFlute"] = value58;
+			_g.h["combine/_nailPipes/wetFlute"] = value59;
 		}
 	}
 	{
-		var value59 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value60 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_nailPipes/wetWeeds"] != null) {
-			_g.setReserved("combine/_nailPipes/wetWeeds",value59);
+			_g.setReserved("combine/_nailPipes/wetWeeds",value60);
 		} else {
-			_g.h["combine/_nailPipes/wetWeeds"] = value59;
+			_g.h["combine/_nailPipes/wetWeeds"] = value60;
 		}
 	}
 	{
-		var value60 = ["Trying to patch up a hole with a holey FLUTE will never work."];
+		var value61 = ["Trying to patch up a hole with a holey FLUTE will never work."];
 		if(__map_reserved["combine/_nailPipes/yellowFlute"] != null) {
-			_g.setReserved("combine/_nailPipes/yellowFlute",value60);
+			_g.setReserved("combine/_nailPipes/yellowFlute",value61);
 		} else {
-			_g.h["combine/_nailPipes/yellowFlute"] = value60;
+			_g.h["combine/_nailPipes/yellowFlute"] = value61;
 		}
 	}
 	{
-		var value61 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
+		var value62 = ["You try to stuff your WEEDS into the hole, but it's too fiddly and you just end up throwing some of it down the PIPES."];
 		if(__map_reserved["combine/_nailPipes/yellowWeeds"] != null) {
-			_g.setReserved("combine/_nailPipes/yellowWeeds",value61);
+			_g.setReserved("combine/_nailPipes/yellowWeeds",value62);
 		} else {
-			_g.h["combine/_nailPipes/yellowWeeds"] = value61;
+			_g.h["combine/_nailPipes/yellowWeeds"] = value62;
 		}
 	}
 	{
-		var value62 = ["Stop getting that ASH all over everything."];
+		var value63 = ["Stop getting that ASH all over everything."];
 		if(__map_reserved["combine/ash"] != null) {
-			_g.setReserved("combine/ash",value62);
+			_g.setReserved("combine/ash",value63);
 		} else {
-			_g.h["combine/ash"] = value62;
+			_g.h["combine/ash"] = value63;
 		}
 	}
 	{
-		var value63 = ["You scratch together a handful of ASH from all over your INVENTORY and pour it into the funnel. The machine rattles and a hollow voice from inside says \"weird how he's still ten after all these years, isn't it.\"\n\nIt then spits out the last bag of BEEF JERKY, which you take."];
+		var value64 = ["You scratch together a handful of ASH from all over your INVENTORY and pour it into the funnel. The machine rattles and a hollow voice from inside says \"weird how he's still ten after all these years, isn't it.\"\n\nIt then spits out the last bag of BEEF JERKY, which you take."];
 		if(__map_reserved["combine/ash/vendingMachine"] != null) {
-			_g.setReserved("combine/ash/vendingMachine",value63);
+			_g.setReserved("combine/ash/vendingMachine",value64);
 		} else {
-			_g.h["combine/ash/vendingMachine"] = value63;
+			_g.h["combine/ash/vendingMachine"] = value64;
 		}
 	}
 	{
-		var value64 = ["The BLADE is way too dull to cut that."];
+		var value65 = ["The BLADE is way too dull to cut that."];
 		if(__map_reserved["combine/blade"] != null) {
-			_g.setReserved("combine/blade",value64);
+			_g.setReserved("combine/blade",value65);
 		} else {
-			_g.h["combine/blade"] = value64;
+			_g.h["combine/blade"] = value65;
 		}
 	}
 	{
-		var value65 = ["You painstakingly scrape off the CHEWING GUM from underneath the table. It takes you 45 minutes to do it, and you curse the culprit who stuck it under here. The BLADE has become even more incredibly dull, so you just throw it away angrily."];
+		var value66 = ["You painstakingly scrape off the CHEWING GUM from underneath the table. It takes you 45 minutes to do it, and you curse the culprit who stuck it under here. The BLADE has become even more incredibly dull, so you just throw it away angrily."];
 		if(__map_reserved["combine/blade/chewingGum"] != null) {
-			_g.setReserved("combine/blade/chewingGum",value65);
+			_g.setReserved("combine/blade/chewingGum",value66);
 		} else {
-			_g.h["combine/blade/chewingGum"] = value65;
+			_g.h["combine/blade/chewingGum"] = value66;
 		}
 	}
 	{
-		var value66 = ["You cut the WEEDS into smaller pieces."];
+		var value67 = ["You cut the WEEDS into smaller pieces."];
 		if(__map_reserved["combine/blade/greenWeeds"] != null) {
-			_g.setReserved("combine/blade/greenWeeds",value66);
+			_g.setReserved("combine/blade/greenWeeds",value67);
 		} else {
-			_g.h["combine/blade/greenWeeds"] = value66;
+			_g.h["combine/blade/greenWeeds"] = value67;
 		}
 	}
 	{
-		var value67 = [""];
+		var value68 = [""];
 		if(__map_reserved["combine/blade/hands"] != null) {
-			_g.setReserved("combine/blade/hands",value67);
+			_g.setReserved("combine/blade/hands",value68);
 		} else {
-			_g.h["combine/blade/hands"] = value67;
+			_g.h["combine/blade/hands"] = value68;
 		}
 	}
 	{
-		var value68 = ["You feel a crawling in your skin and slash your wrists with the BLADE.\n\nOh wait no, it was just goosebumps. Good thing the BLADE is way too dull to cut through your skin.","The BLADE is way too dull to even cut your skin."];
+		var value69 = ["You feel a crawling in your skin and slash your wrists with the BLADE.\n\nOh wait no, it was just goosebumps. Good thing the BLADE is way too dull to cut through your skin.","The BLADE is way too dull to even cut your skin."];
 		if(__map_reserved["combine/blade/self"] != null) {
-			_g.setReserved("combine/blade/self",value68);
+			_g.setReserved("combine/blade/self",value69);
 		} else {
-			_g.h["combine/blade/self"] = value68;
-		}
-	}
-	{
-		var value69 = ["You cut the WEEDS into smaller pieces."];
-		if(__map_reserved["combine/blade/wetWeeds"] != null) {
-			_g.setReserved("combine/blade/wetWeeds",value69);
-		} else {
-			_g.h["combine/blade/wetWeeds"] = value69;
+			_g.h["combine/blade/self"] = value69;
 		}
 	}
 	{
 		var value70 = ["You cut the WEEDS into smaller pieces."];
+		if(__map_reserved["combine/blade/wetWeeds"] != null) {
+			_g.setReserved("combine/blade/wetWeeds",value70);
+		} else {
+			_g.h["combine/blade/wetWeeds"] = value70;
+		}
+	}
+	{
+		var value71 = ["You cut the WEEDS into smaller pieces."];
 		if(__map_reserved["combine/blade/yellowWeeds"] != null) {
-			_g.setReserved("combine/blade/yellowWeeds",value70);
+			_g.setReserved("combine/blade/yellowWeeds",value71);
 		} else {
-			_g.h["combine/blade/yellowWeeds"] = value70;
+			_g.h["combine/blade/yellowWeeds"] = value71;
 		}
 	}
 	{
-		var value71 = ["That doesn't need a workout."];
+		var value72 = ["That doesn't need a workout."];
 		if(__map_reserved["combine/bowflex"] != null) {
-			_g.setReserved("combine/bowflex",value71);
+			_g.setReserved("combine/bowflex",value72);
 		} else {
-			_g.h["combine/bowflex"] = value71;
+			_g.h["combine/bowflex"] = value72;
 		}
 	}
 	{
-		var value72 = ["You don't want to smash that into the CEILING."];
+		var value73 = ["You don't want to smash that into the CEILING."];
 		if(__map_reserved["combine/ceiling"] != null) {
-			_g.setReserved("combine/ceiling",value72);
+			_g.setReserved("combine/ceiling",value73);
 		} else {
-			_g.h["combine/ceiling"] = value72;
+			_g.h["combine/ceiling"] = value73;
 		}
 	}
 	{
-		var value73 = ["You can't scrape off the CHEWING GUM with that. Maybe if you'd ever worked a real job in your life, you'd already know that."];
+		var value74 = ["You can't scrape off the CHEWING GUM with that. Maybe if you'd ever worked a real job in your life, you'd already know that."];
 		if(__map_reserved["combine/chewingGum"] != null) {
-			_g.setReserved("combine/chewingGum",value73);
+			_g.setReserved("combine/chewingGum",value74);
 		} else {
-			_g.h["combine/chewingGum"] = value73;
+			_g.h["combine/chewingGum"] = value74;
 		}
 	}
 	{
-		var value74 = ["Your CLOTHES are in use: you're wearing them."];
+		var value75 = ["Your CLOTHES are in use: you're wearing them."];
 		if(__map_reserved["combine/clothes"] != null) {
-			_g.setReserved("combine/clothes",value74);
+			_g.setReserved("combine/clothes",value75);
 		} else {
-			_g.h["combine/clothes"] = value74;
+			_g.h["combine/clothes"] = value75;
 		}
 	}
 	{
-		var value75 = ["That won't help you against the DRAGON."];
+		var value76 = ["That won't help you against the DRAGON."];
 		if(__map_reserved["combine/dragon"] != null) {
-			_g.setReserved("combine/dragon",value75);
+			_g.setReserved("combine/dragon",value76);
 		} else {
-			_g.h["combine/dragon"] = value75;
+			_g.h["combine/dragon"] = value76;
 		}
 	}
 	{
-		var value76 = ["If you insist...","You try to fight the DRAGON once more."];
+		var value77 = ["If you insist...","You try to fight the DRAGON once more."];
 		if(__map_reserved["combine/dragon/hands"] != null) {
-			_g.setReserved("combine/dragon/hands",value76);
+			_g.setReserved("combine/dragon/hands",value77);
 		} else {
-			_g.h["combine/dragon/hands"] = value76;
+			_g.h["combine/dragon/hands"] = value77;
 		}
 	}
 	{
-		var value77 = ["You offer YOURSELF as a sacrifice. The DRAGON asks you to please not make this weird.","You've been asked to not make it weird, so stop doing that now."];
+		var value78 = ["You offer YOURSELF as a sacrifice. The DRAGON asks you to please not make this weird.","You've been asked to not make it weird, so stop doing that now."];
 		if(__map_reserved["combine/dragon/self"] != null) {
-			_g.setReserved("combine/dragon/self",value77);
+			_g.setReserved("combine/dragon/self",value78);
 		} else {
-			_g.h["combine/dragon/self"] = value77;
+			_g.h["combine/dragon/self"] = value78;
 		}
 	}
 	{
-		var value78 = ["You should just try pulling the LEVER instead of shoving that into the door."];
+		var value79 = ["You should just try pulling the LEVER instead of shoving that into the door."];
 		if(__map_reserved["combine/exitDoor"] != null) {
-			_g.setReserved("combine/exitDoor",value78);
+			_g.setReserved("combine/exitDoor",value79);
 		} else {
-			_g.h["combine/exitDoor"] = value78;
+			_g.h["combine/exitDoor"] = value79;
 		}
 	}
 	{
-		var value79 = ["You try to drape your PANTS over the FIRE to smother it out. It seems to work for a moment, but then they just catch on FIRE as well."];
+		var value80 = ["You try to drape your PANTS over the FIRE to smother it out. It seems to work for a moment, but then they just catch on FIRE as well."];
 		if(__map_reserved["combine/fire/pants"] != null) {
-			_g.setReserved("combine/fire/pants",value79);
+			_g.setReserved("combine/fire/pants",value80);
 		} else {
-			_g.h["combine/fire/pants"] = value79;
+			_g.h["combine/fire/pants"] = value80;
 		}
 	}
 	{
-		var value80 = ["You try to smother the flames with your SHIRT. However, the cheap fabric just catches FIRE immediately and only adds fuel to the flames."];
+		var value81 = ["You try to smother the flames with your SHIRT. However, the cheap fabric just catches FIRE immediately and only adds fuel to the flames."];
 		if(__map_reserved["combine/fire/shirt"] != null) {
-			_g.setReserved("combine/fire/shirt",value80);
+			_g.setReserved("combine/fire/shirt",value81);
 		} else {
-			_g.h["combine/fire/shirt"] = value80;
+			_g.h["combine/fire/shirt"] = value81;
 		}
 	}
 	{
-		var value81 = ["You can't just bring the FIRE and water from the TOILET together like that. The former is too hot to touch, and the latter just runs through your fingers."];
+		var value82 = ["You can't just bring the FIRE and water from the TOILET together like that. The former is too hot to touch, and the latter just runs through your fingers."];
 		if(__map_reserved["combine/fire/toilet"] != null) {
-			_g.setReserved("combine/fire/toilet",value81);
+			_g.setReserved("combine/fire/toilet",value82);
 		} else {
-			_g.h["combine/fire/toilet"] = value81;
+			_g.h["combine/fire/toilet"] = value82;
 		}
 	}
 	{
-		var value82 = ["You throw your WET CLOTH over the fire to smother the flames. It smolders and hisses precariously - but in the end, the fire goes out!\n\nThere is just SOOT left where the TRASHCAN used to be."];
+		var value83 = ["You throw your WET CLOTH over the fire to smother the flames. It smolders and hisses precariously - but in the end, the fire goes out!\n\nThere is just SOOT left where the TRASHCAN used to be."];
 		if(__map_reserved["combine/fire/wetcloth"] != null) {
-			_g.setReserved("combine/fire/wetcloth",value82);
+			_g.setReserved("combine/fire/wetcloth",value83);
 		} else {
-			_g.h["combine/fire/wetcloth"] = value82;
+			_g.h["combine/fire/wetcloth"] = value83;
 		}
 	}
 	{
-		var value83 = ["You throw your WET RAG over the fire to smother the flames. It smolders and hisses precariously - but in the end, the fire goes out!\n\nThere is just SOOT left where the TRASHCAN used to be."];
+		var value84 = ["You throw your WET RAG over the fire to smother the flames. It smolders and hisses precariously - but in the end, the fire goes out!\n\nThere is just SOOT left where the TRASHCAN used to be."];
 		if(__map_reserved["combine/fire/wetrag"] != null) {
-			_g.setReserved("combine/fire/wetrag",value83);
+			_g.setReserved("combine/fire/wetrag",value84);
 		} else {
-			_g.h["combine/fire/wetrag"] = value83;
+			_g.h["combine/fire/wetrag"] = value84;
 		}
 	}
 	{
-		var value84 = ["You don't want to throw that on the FLOOR."];
+		var value85 = ["You don't want to throw that on the FLOOR."];
 		if(__map_reserved["combine/floor"] != null) {
-			_g.setReserved("combine/floor",value84);
+			_g.setReserved("combine/floor",value85);
 		} else {
-			_g.h["combine/floor"] = value84;
+			_g.h["combine/floor"] = value85;
 		}
 	}
 	{
-		var value85 = ["You stuff a bit of your dry, green WEEDS into the bottom of the FLUTE. It looks very appropriate."];
+		var value86 = ["You stuff a bit of your dry, green WEEDS into the bottom of the FLUTE. It looks very appropriate."];
 		if(__map_reserved["combine/flute/greenWeeds"] != null) {
-			_g.setReserved("combine/flute/greenWeeds",value85);
+			_g.setReserved("combine/flute/greenWeeds",value86);
 		} else {
-			_g.h["combine/flute/greenWeeds"] = value85;
+			_g.h["combine/flute/greenWeeds"] = value86;
 		}
 	}
 	{
-		var value86 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
+		var value87 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
 		if(__map_reserved["combine/flute/painting"] != null) {
-			_g.setReserved("combine/flute/painting",value86);
+			_g.setReserved("combine/flute/painting",value87);
 		} else {
-			_g.h["combine/flute/painting"] = value86;
+			_g.h["combine/flute/painting"] = value87;
 		}
 	}
 	{
-		var value87 = ["You stick the FLUTE into the SPARKS. It achieves absolutely nothing."];
+		var value88 = ["You stick the FLUTE into the SPARKS. It achieves absolutely nothing."];
 		if(__map_reserved["combine/flute/sparks"] != null) {
-			_g.setReserved("combine/flute/sparks",value87);
+			_g.setReserved("combine/flute/sparks",value88);
 		} else {
-			_g.h["combine/flute/sparks"] = value87;
+			_g.h["combine/flute/sparks"] = value88;
 		}
 	}
 	{
-		var value88 = ["The FLUTE is of much more use to you than it is to this STATUE."];
+		var value89 = ["The FLUTE is of much more use to you than it is to this STATUE."];
 		if(__map_reserved["combine/flute/statue"] != null) {
-			_g.setReserved("combine/flute/statue",value88);
+			_g.setReserved("combine/flute/statue",value89);
 		} else {
-			_g.h["combine/flute/statue"] = value88;
+			_g.h["combine/flute/statue"] = value89;
 		}
 	}
 	{
-		var value89 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
+		var value90 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
 		if(__map_reserved["combine/flute/toilet"] != null) {
-			_g.setReserved("combine/flute/toilet",value89);
+			_g.setReserved("combine/flute/toilet",value90);
 		} else {
-			_g.h["combine/flute/toilet"] = value89;
+			_g.h["combine/flute/toilet"] = value90;
 		}
 	}
 	{
-		var value90 = ["You stuff a bit of your wet, green WEEDS into the bottom of the FLUTE. It looks appropriate, but the wetness is just wrong."];
+		var value91 = ["You stuff a bit of your wet, green WEEDS into the bottom of the FLUTE. It looks appropriate, but the wetness is just wrong."];
 		if(__map_reserved["combine/flute/wetWeeds"] != null) {
-			_g.setReserved("combine/flute/wetWeeds",value90);
+			_g.setReserved("combine/flute/wetWeeds",value91);
 		} else {
-			_g.h["combine/flute/wetWeeds"] = value90;
+			_g.h["combine/flute/wetWeeds"] = value91;
 		}
 	}
 	{
-		var value91 = ["You stuff a bit of your dry, yellow WEEDS into the bottom of the FLUTE. It looks almost appropriate somehow."];
+		var value92 = ["You stuff a bit of your dry, yellow WEEDS into the bottom of the FLUTE. It looks almost appropriate somehow."];
 		if(__map_reserved["combine/flute/yellowWeeds"] != null) {
-			_g.setReserved("combine/flute/yellowWeeds",value91);
+			_g.setReserved("combine/flute/yellowWeeds",value92);
 		} else {
-			_g.h["combine/flute/yellowWeeds"] = value91;
+			_g.h["combine/flute/yellowWeeds"] = value92;
 		}
 	}
 	{
-		var value92 = ["It's already full of that."];
+		var value93 = ["It's already full of that."];
 		if(__map_reserved["combine/greenFlute/greenWeeds"] != null) {
-			_g.setReserved("combine/greenFlute/greenWeeds",value92);
+			_g.setReserved("combine/greenFlute/greenWeeds",value93);
 		} else {
-			_g.h["combine/greenFlute/greenWeeds"] = value92;
+			_g.h["combine/greenFlute/greenWeeds"] = value93;
 		}
 	}
 	{
-		var value93 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
+		var value94 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
 		if(__map_reserved["combine/greenFlute/painting"] != null) {
-			_g.setReserved("combine/greenFlute/painting",value93);
+			_g.setReserved("combine/greenFlute/painting",value94);
 		} else {
-			_g.h["combine/greenFlute/painting"] = value93;
+			_g.h["combine/greenFlute/painting"] = value94;
 		}
 	}
 	{
-		var value94 = ["You stick the FLUTE into the SPARKS. The WEEDS get lit up and start smoldering."];
+		var value95 = ["You stick the FLUTE into the SPARKS. The WEEDS get lit up and start smoldering."];
 		if(__map_reserved["combine/greenFlute/sparks"] != null) {
-			_g.setReserved("combine/greenFlute/sparks",value94);
+			_g.setReserved("combine/greenFlute/sparks",value95);
 		} else {
-			_g.h["combine/greenFlute/sparks"] = value94;
+			_g.h["combine/greenFlute/sparks"] = value95;
 		}
 	}
 	{
-		var value95 = ["The FLUTE is of much more use to you than it is to this STATUE."];
+		var value96 = ["The FLUTE is of much more use to you than it is to this STATUE."];
 		if(__map_reserved["combine/greenFlute/statue"] != null) {
-			_g.setReserved("combine/greenFlute/statue",value95);
+			_g.setReserved("combine/greenFlute/statue",value96);
 		} else {
-			_g.h["combine/greenFlute/statue"] = value95;
+			_g.h["combine/greenFlute/statue"] = value96;
 		}
 	}
 	{
-		var value96 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
+		var value97 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
 		if(__map_reserved["combine/greenFlute/toilet"] != null) {
-			_g.setReserved("combine/greenFlute/toilet",value96);
+			_g.setReserved("combine/greenFlute/toilet",value97);
 		} else {
-			_g.h["combine/greenFlute/toilet"] = value96;
+			_g.h["combine/greenFlute/toilet"] = value97;
 		}
 	}
 	{
-		var value97 = ["You throw some of your dry, green WEEDS into the SPARKS. They catch on fire and fill the room with a chemical smell that makes you feel a bit dizzy."];
+		var value98 = ["You throw some of your dry, green WEEDS into the SPARKS. They catch on fire and fill the room with a chemical smell that makes you feel a bit dizzy."];
 		if(__map_reserved["combine/greenWeeds/sparks"] != null) {
-			_g.setReserved("combine/greenWeeds/sparks",value97);
+			_g.setReserved("combine/greenWeeds/sparks",value98);
 		} else {
-			_g.h["combine/greenWeeds/sparks"] = value97;
+			_g.h["combine/greenWeeds/sparks"] = value98;
 		}
 	}
 	{
-		var value98 = ["They've been in there enough."];
+		var value99 = ["They've been in there enough."];
 		if(__map_reserved["combine/greenWeeds/toilet"] != null) {
-			_g.setReserved("combine/greenWeeds/toilet",value98);
+			_g.setReserved("combine/greenWeeds/toilet",value99);
 		} else {
-			_g.h["combine/greenWeeds/toilet"] = value98;
+			_g.h["combine/greenWeeds/toilet"] = value99;
 		}
 	}
 	{
-		var value99 = ["Get your grubby hands off of that."];
+		var value100 = ["Get your grubby hands off of that."];
 		if(__map_reserved["combine/hands"] != null) {
-			_g.setReserved("combine/hands",value99);
+			_g.setReserved("combine/hands",value100);
 		} else {
-			_g.h["combine/hands"] = value99;
+			_g.h["combine/hands"] = value100;
 		}
 	}
 	{
-		var value100 = ["Stop touching yourself in front of me."];
+		var value101 = ["Stop touching yourself in front of me."];
 		if(__map_reserved["combine/hands/self"] != null) {
-			_g.setReserved("combine/hands/self",value100);
+			_g.setReserved("combine/hands/self",value101);
 		} else {
-			_g.h["combine/hands/self"] = value100;
+			_g.h["combine/hands/self"] = value101;
 		}
 	}
 	{
-		var value101 = ["Your arms don't fit into the VENDING MACHINE. Just pay it like a normal person would."];
+		var value102 = ["Your arms don't fit into the VENDING MACHINE. Just pay it like a normal person would."];
 		if(__map_reserved["combine/hands/vendingMachine"] != null) {
-			_g.setReserved("combine/hands/vendingMachine",value101);
+			_g.setReserved("combine/hands/vendingMachine",value102);
 		} else {
-			_g.h["combine/hands/vendingMachine"] = value101;
+			_g.h["combine/hands/vendingMachine"] = value102;
 		}
 	}
 	{
-		var value102 = ["A hard wad of CHEWING GUM won't do any good there."];
+		var value103 = ["A hard wad of CHEWING GUM won't do any good there."];
 		if(__map_reserved["combine/hardGum"] != null) {
-			_g.setReserved("combine/hardGum",value102);
+			_g.setReserved("combine/hardGum",value103);
 		} else {
-			_g.h["combine/hardGum"] = value102;
+			_g.h["combine/hardGum"] = value103;
 		}
 	}
 	{
-		var value103 = ["But that CHEWING GUM still has so much flavor to it! You really don't want to put it in the toilet and ruin that experience forever."];
+		var value104 = ["But that CHEWING GUM still has so much flavor to it! You really don't want to put it in the toilet and ruin that experience forever."];
 		if(__map_reserved["combine/hardGum/toilet"] != null) {
-			_g.setReserved("combine/hardGum/toilet",value103);
+			_g.setReserved("combine/hardGum/toilet",value104);
 		} else {
-			_g.h["combine/hardGum/toilet"] = value103;
+			_g.h["combine/hardGum/toilet"] = value104;
 		}
 	}
 	{
-		var value104 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
+		var value105 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
 		if(__map_reserved["combine/litGreenFlute/painting"] != null) {
-			_g.setReserved("combine/litGreenFlute/painting",value104);
+			_g.setReserved("combine/litGreenFlute/painting",value105);
 		} else {
-			_g.h["combine/litGreenFlute/painting"] = value104;
+			_g.h["combine/litGreenFlute/painting"] = value105;
 		}
 	}
 	{
-		var value105 = ["It's already lit."];
+		var value106 = ["It's already lit."];
 		if(__map_reserved["combine/litGreenFlute/sparks"] != null) {
-			_g.setReserved("combine/litGreenFlute/sparks",value105);
+			_g.setReserved("combine/litGreenFlute/sparks",value106);
 		} else {
-			_g.h["combine/litGreenFlute/sparks"] = value105;
+			_g.h["combine/litGreenFlute/sparks"] = value106;
 		}
 	}
 	{
-		var value106 = ["The FLUTE is of much more use to you than it is to this STATUE."];
+		var value107 = ["The FLUTE is of much more use to you than it is to this STATUE."];
 		if(__map_reserved["combine/litGreenFlute/statue"] != null) {
-			_g.setReserved("combine/litGreenFlute/statue",value106);
+			_g.setReserved("combine/litGreenFlute/statue",value107);
 		} else {
-			_g.h["combine/litGreenFlute/statue"] = value106;
+			_g.h["combine/litGreenFlute/statue"] = value107;
 		}
 	}
 	{
-		var value107 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
+		var value108 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
 		if(__map_reserved["combine/litGreenFlute/toilet"] != null) {
-			_g.setReserved("combine/litGreenFlute/toilet",value107);
+			_g.setReserved("combine/litGreenFlute/toilet",value108);
 		} else {
-			_g.h["combine/litGreenFlute/toilet"] = value107;
+			_g.h["combine/litGreenFlute/toilet"] = value108;
 		}
 	}
 	{
-		var value108 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
+		var value109 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
 		if(__map_reserved["combine/litYellowFlute/painting"] != null) {
-			_g.setReserved("combine/litYellowFlute/painting",value108);
+			_g.setReserved("combine/litYellowFlute/painting",value109);
 		} else {
-			_g.h["combine/litYellowFlute/painting"] = value108;
+			_g.h["combine/litYellowFlute/painting"] = value109;
 		}
 	}
 	{
-		var value109 = ["It's already lit."];
+		var value110 = ["It's already lit."];
 		if(__map_reserved["combine/litYellowFlute/sparks"] != null) {
-			_g.setReserved("combine/litYellowFlute/sparks",value109);
+			_g.setReserved("combine/litYellowFlute/sparks",value110);
 		} else {
-			_g.h["combine/litYellowFlute/sparks"] = value109;
+			_g.h["combine/litYellowFlute/sparks"] = value110;
 		}
 	}
 	{
-		var value110 = ["The FLUTE is of much more use to you than it is to this STATUE."];
+		var value111 = ["The FLUTE is of much more use to you than it is to this STATUE."];
 		if(__map_reserved["combine/litYellowFlute/statue"] != null) {
-			_g.setReserved("combine/litYellowFlute/statue",value110);
+			_g.setReserved("combine/litYellowFlute/statue",value111);
 		} else {
-			_g.h["combine/litYellowFlute/statue"] = value110;
+			_g.h["combine/litYellowFlute/statue"] = value111;
 		}
 	}
 	{
-		var value111 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
+		var value112 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
 		if(__map_reserved["combine/litYellowFlute/toilet"] != null) {
-			_g.setReserved("combine/litYellowFlute/toilet",value111);
+			_g.setReserved("combine/litYellowFlute/toilet",value112);
 		} else {
-			_g.h["combine/litYellowFlute/toilet"] = value111;
+			_g.h["combine/litYellowFlute/toilet"] = value112;
 		}
 	}
 	{
-		var value112 = ["That doesn't need to be NAILed."];
+		var value113 = ["That doesn't need to be NAILed."];
 		if(__map_reserved["combine/nail"] != null) {
-			_g.setReserved("combine/nail",value112);
+			_g.setReserved("combine/nail",value113);
 		} else {
-			_g.h["combine/nail"] = value112;
+			_g.h["combine/nail"] = value113;
 		}
 	}
 	{
-		var value113 = ["You take the CHEWING GUM out of your mouth and wrap it around the rusty NAIL. The result is a makeshift PLUG, or at least you tell yourself that so that it doesn't seem weird why you're just sticking random objects together."];
+		var value114 = ["You take the CHEWING GUM out of your mouth and wrap it around the rusty NAIL. The result is a makeshift PLUG, or at least you tell yourself that so that it doesn't seem weird why you're just sticking random objects together."];
 		if(__map_reserved["combine/nail/softGum"] != null) {
-			_g.setReserved("combine/nail/softGum",value113);
+			_g.setReserved("combine/nail/softGum",value114);
 		} else {
-			_g.h["combine/nail/softGum"] = value113;
+			_g.h["combine/nail/softGum"] = value114;
 		}
 	}
 	{
-		var value114 = ["Stop using game objects on me, they leave stains."];
+		var value115 = ["Stop using game objects on me, they leave stains."];
 		if(__map_reserved["combine/narrator"] != null) {
-			_g.setReserved("combine/narrator",value114);
+			_g.setReserved("combine/narrator",value115);
 		} else {
-			_g.h["combine/narrator"] = value114;
+			_g.h["combine/narrator"] = value115;
 		}
 	}
 	{
-		var value115 = ["Don't ruin the nice PAINTING with that."];
+		var value116 = ["Don't ruin the nice PAINTING with that."];
 		if(__map_reserved["combine/painting"] != null) {
-			_g.setReserved("combine/painting",value115);
+			_g.setReserved("combine/painting",value116);
 		} else {
-			_g.h["combine/painting"] = value115;
-		}
-	}
-	{
-		var value116 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
-		if(__map_reserved["combine/painting/wetFlute"] != null) {
-			_g.setReserved("combine/painting/wetFlute",value116);
-		} else {
-			_g.h["combine/painting/wetFlute"] = value116;
+			_g.h["combine/painting"] = value116;
 		}
 	}
 	{
 		var value117 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
+		if(__map_reserved["combine/painting/wetFlute"] != null) {
+			_g.setReserved("combine/painting/wetFlute",value117);
+		} else {
+			_g.h["combine/painting/wetFlute"] = value117;
+		}
+	}
+	{
+		var value118 = ["You sensually rub your FLUTE against the PAINTING. It's weird, but nothing else."];
 		if(__map_reserved["combine/painting/yellowFlute"] != null) {
-			_g.setReserved("combine/painting/yellowFlute",value117);
+			_g.setReserved("combine/painting/yellowFlute",value118);
 		} else {
-			_g.h["combine/painting/yellowFlute"] = value117;
+			_g.h["combine/painting/yellowFlute"] = value118;
 		}
 	}
 	{
-		var value118 = ["That doesn't want to wear any PANTS."];
+		var value119 = ["That doesn't want to wear any PANTS."];
 		if(__map_reserved["combine/pants"] != null) {
-			_g.setReserved("combine/pants",value118);
+			_g.setReserved("combine/pants",value119);
 		} else {
-			_g.h["combine/pants"] = value118;
+			_g.h["combine/pants"] = value119;
 		}
 	}
 	{
-		var value119 = ["You put your PANTS on your head. But that looks silly, so you take them back off again."];
+		var value120 = ["You put your PANTS on your head. But that looks silly, so you take them back off again."];
 		if(__map_reserved["combine/pants/self"] != null) {
-			_g.setReserved("combine/pants/self",value119);
+			_g.setReserved("combine/pants/self",value120);
 		} else {
-			_g.h["combine/pants/self"] = value119;
+			_g.h["combine/pants/self"] = value120;
 		}
 	}
 	{
-		var value120 = ["Actually, now that you took them off, I guess it's alright to tell you: those two don't go together. Like, at all. I won't let you put them back on and have you embarrass yourself further."];
+		var value121 = ["Actually, now that you took them off, I guess it's alright to tell you: those two don't go together. Like, at all. I won't let you put them back on and have you embarrass yourself further."];
 		if(__map_reserved["combine/pants/shirt"] != null) {
-			_g.setReserved("combine/pants/shirt",value120);
+			_g.setReserved("combine/pants/shirt",value121);
 		} else {
-			_g.h["combine/pants/shirt"] = value120;
+			_g.h["combine/pants/shirt"] = value121;
 		}
 	}
 	{
-		var value121 = ["You soak your PANTS in the TOILET water. They're basically nothing more than a WET RAG now, with a blue tint."];
+		var value122 = ["You soak your PANTS in the TOILET water. They're basically nothing more than a WET RAG now, with a blue tint."];
 		if(__map_reserved["combine/pants/toilet"] != null) {
-			_g.setReserved("combine/pants/toilet",value121);
+			_g.setReserved("combine/pants/toilet",value122);
 		} else {
-			_g.h["combine/pants/toilet"] = value121;
+			_g.h["combine/pants/toilet"] = value122;
 		}
 	}
 	{
-		var value122 = ["That doesn't need to be PLUGged."];
+		var value123 = ["That doesn't need to be PLUGged."];
 		if(__map_reserved["combine/plug"] != null) {
-			_g.setReserved("combine/plug",value122);
+			_g.setReserved("combine/plug",value123);
 		} else {
-			_g.h["combine/plug"] = value122;
+			_g.h["combine/plug"] = value123;
 		}
 	}
 	{
-		var value123 = ["You put your KEY into the DOOR - it fits! You swing it aside and gleefully stride through."];
+		var value124 = ["You put your KEY into the DOOR - it fits! You swing it aside and gleefully stride through."];
 		if(__map_reserved["combine/restroomdoor/restroomkey"] != null) {
-			_g.setReserved("combine/restroomdoor/restroomkey",value123);
+			_g.setReserved("combine/restroomdoor/restroomkey",value124);
 		} else {
-			_g.h["combine/restroomdoor/restroomkey"] = value123;
+			_g.h["combine/restroomdoor/restroomkey"] = value124;
 		}
 	}
 	{
-		var value124 = ["You put your PANTS on your head. But that looks silly, so you take them back off again."];
+		var value125 = ["You put your PANTS on your head. But that looks silly, so you take them back off again."];
 		if(__map_reserved["combine/self/shirt"] != null) {
-			_g.setReserved("combine/self/shirt",value124);
+			_g.setReserved("combine/self/shirt",value125);
 		} else {
-			_g.h["combine/self/shirt"] = value124;
+			_g.h["combine/self/shirt"] = value125;
 		}
 	}
 	{
-		var value125 = ["You wipe your brow with the SILICA GEL PACKET. It does a good job at drawing away the sweat, leaving your forehead nice and dry.","You're already dry enough. You'll have to find something else to draw the moisture out of."];
+		var value126 = ["You wipe your brow with the SILICA GEL PACKET. It does a good job at drawing away the sweat, leaving your forehead nice and dry.","You're already dry enough. You'll have to find something else to draw the moisture out of."];
 		if(__map_reserved["combine/self/silicaGelPacket"] != null) {
-			_g.setReserved("combine/self/silicaGelPacket",value125);
+			_g.setReserved("combine/self/silicaGelPacket",value126);
 		} else {
-			_g.h["combine/self/silicaGelPacket"] = value125;
+			_g.h["combine/self/silicaGelPacket"] = value126;
 		}
 	}
 	{
-		var value126 = ["You don't fit into the VENDING MACHINE. Nor do any of your extremities."];
+		var value127 = ["You don't fit into the VENDING MACHINE. Nor do any of your extremities."];
 		if(__map_reserved["combine/self/vendingMachine"] != null) {
-			_g.setReserved("combine/self/vendingMachine",value126);
+			_g.setReserved("combine/self/vendingMachine",value127);
 		} else {
-			_g.h["combine/self/vendingMachine"] = value126;
+			_g.h["combine/self/vendingMachine"] = value127;
 		}
 	}
 	{
-		var value127 = ["Don't scatter your dirty laundry everywhere."];
+		var value128 = ["Don't scatter your dirty laundry everywhere."];
 		if(__map_reserved["combine/shirt"] != null) {
-			_g.setReserved("combine/shirt",value127);
+			_g.setReserved("combine/shirt",value128);
 		} else {
-			_g.h["combine/shirt"] = value127;
+			_g.h["combine/shirt"] = value128;
 		}
 	}
 	{
-		var value128 = ["You dunk your SHIRT into the water in the bowl. It's really just a WET CLOTH now, tinted blue from the chemicals in the water."];
+		var value129 = ["You dunk your SHIRT into the water in the bowl. It's really just a WET CLOTH now, tinted blue from the chemicals in the water."];
 		if(__map_reserved["combine/shirt/toilet"] != null) {
-			_g.setReserved("combine/shirt/toilet",value128);
+			_g.setReserved("combine/shirt/toilet",value129);
 		} else {
-			_g.h["combine/shirt/toilet"] = value128;
+			_g.h["combine/shirt/toilet"] = value129;
 		}
 	}
 	{
-		var value129 = ["That doesn't need the moisture drawn out of it."];
+		var value130 = ["That doesn't need the moisture drawn out of it."];
 		if(__map_reserved["combine/silicaGelPacket"] != null) {
-			_g.setReserved("combine/silicaGelPacket",value129);
+			_g.setReserved("combine/silicaGelPacket",value130);
 		} else {
-			_g.h["combine/silicaGelPacket"] = value129;
+			_g.h["combine/silicaGelPacket"] = value130;
 		}
 	}
 	{
-		var value130 = ["It'd be pretty pointless to draw the water out of the TOILET, it would just refill with more water from the tank."];
+		var value131 = ["It'd be pretty pointless to draw the water out of the TOILET, it would just refill with more water from the tank."];
 		if(__map_reserved["combine/silicaGelPacket/toilet"] != null) {
-			_g.setReserved("combine/silicaGelPacket/toilet",value130);
+			_g.setReserved("combine/silicaGelPacket/toilet",value131);
 		} else {
-			_g.h["combine/silicaGelPacket/toilet"] = value130;
+			_g.h["combine/silicaGelPacket/toilet"] = value131;
 		}
 	}
 	{
-		var value131 = ["The SILICA GEL PACKET doesn't fit into the hole of the flute. But you could just use it with the rest of your WEEDS instead."];
+		var value132 = ["The SILICA GEL PACKET doesn't fit into the hole of the flute. But you could just use it with the rest of your WEEDS instead."];
 		if(__map_reserved["combine/silicaGelPacket/wetFlute"] != null) {
-			_g.setReserved("combine/silicaGelPacket/wetFlute",value131);
+			_g.setReserved("combine/silicaGelPacket/wetFlute",value132);
 		} else {
-			_g.h["combine/silicaGelPacket/wetFlute"] = value131;
+			_g.h["combine/silicaGelPacket/wetFlute"] = value132;
 		}
 	}
 	{
-		var value132 = ["You squish the SILICA GEL PACKET into your wad of wet WEEDS. It immediately sacrifices itself to soak up all the excess water from it. Now you have a stash of dry, green WEEDS, with all the chemicals and none of the wetness."];
+		var value133 = ["You squish the SILICA GEL PACKET into your wad of wet WEEDS. It immediately sacrifices itself to soak up all the excess water from it. Now you have a stash of dry, green WEEDS, with all the chemicals and none of the wetness."];
 		if(__map_reserved["combine/silicaGelPacket/wetWeeds"] != null) {
-			_g.setReserved("combine/silicaGelPacket/wetWeeds",value132);
+			_g.setReserved("combine/silicaGelPacket/wetWeeds",value133);
 		} else {
-			_g.h["combine/silicaGelPacket/wetWeeds"] = value132;
+			_g.h["combine/silicaGelPacket/wetWeeds"] = value133;
 		}
 	}
 	{
-		var value133 = ["You don't need to chop that. It probably wouldn't fit in the SLAP CHOP anyway."];
+		var value134 = ["You don't need to chop that. It probably wouldn't fit in the SLAP CHOP anyway."];
 		if(__map_reserved["combine/slapChop"] != null) {
-			_g.setReserved("combine/slapChop",value133);
+			_g.setReserved("combine/slapChop",value134);
 		} else {
-			_g.h["combine/slapChop"] = value133;
+			_g.h["combine/slapChop"] = value134;
 		}
 	}
 	{
-		var value134 = ["You don't want to stick any CHEWING GUM on that."];
+		var value135 = ["You don't want to stick any CHEWING GUM on that."];
 		if(__map_reserved["combine/softGum"] != null) {
-			_g.setReserved("combine/softGum",value134);
+			_g.setReserved("combine/softGum",value135);
 		} else {
-			_g.h["combine/softGum"] = value134;
+			_g.h["combine/softGum"] = value135;
 		}
 	}
 	{
-		var value135 = ["You stick the FLUTE into the SPARKS, but the WEEDS inside it are so wet that it just causes fizzling noises."];
+		var value136 = ["You stick the FLUTE into the SPARKS, but the WEEDS inside it are so wet that it just causes fizzling noises."];
 		if(__map_reserved["combine/sparks/wetFlute"] != null) {
-			_g.setReserved("combine/sparks/wetFlute",value135);
+			_g.setReserved("combine/sparks/wetFlute",value136);
 		} else {
-			_g.h["combine/sparks/wetFlute"] = value135;
+			_g.h["combine/sparks/wetFlute"] = value136;
 		}
 	}
 	{
-		var value136 = ["You throw some of your wet, green WEEDS into the SPARKS. Nothing much happens other than the SPARKS fizzling out as they touch the wet mass."];
+		var value137 = ["You throw some of your wet, green WEEDS into the SPARKS. Nothing much happens other than the SPARKS fizzling out as they touch the wet mass."];
 		if(__map_reserved["combine/sparks/wetWeeds"] != null) {
-			_g.setReserved("combine/sparks/wetWeeds",value136);
+			_g.setReserved("combine/sparks/wetWeeds",value137);
 		} else {
-			_g.h["combine/sparks/wetWeeds"] = value136;
+			_g.h["combine/sparks/wetWeeds"] = value137;
 		}
 	}
 	{
-		var value137 = ["You stick the FLUTE into the SPARKS. The WEEDS get lit up and start smoldering, creating smoke and the smell of burning leaves."];
+		var value138 = ["You stick the FLUTE into the SPARKS. The WEEDS get lit up and start smoldering, creating smoke and the smell of burning leaves."];
 		if(__map_reserved["combine/sparks/yellowFlute"] != null) {
-			_g.setReserved("combine/sparks/yellowFlute",value137);
+			_g.setReserved("combine/sparks/yellowFlute",value138);
 		} else {
-			_g.h["combine/sparks/yellowFlute"] = value137;
+			_g.h["combine/sparks/yellowFlute"] = value138;
 		}
 	}
 	{
-		var value138 = ["You throw some of your dry, yellow WEEDS into the SPARKS. They catch on fire and leave the unpleasant smell of burning leaves."];
+		var value139 = ["You throw some of your dry, yellow WEEDS into the SPARKS. They catch on fire and leave the unpleasant smell of burning leaves."];
 		if(__map_reserved["combine/sparks/yellowWeeds"] != null) {
-			_g.setReserved("combine/sparks/yellowWeeds",value138);
+			_g.setReserved("combine/sparks/yellowWeeds",value139);
 		} else {
-			_g.h["combine/sparks/yellowWeeds"] = value138;
-		}
-	}
-	{
-		var value139 = ["The FLUTE is of much more use to you than it is to this STATUE."];
-		if(__map_reserved["combine/statue/wetFlute"] != null) {
-			_g.setReserved("combine/statue/wetFlute",value139);
-		} else {
-			_g.h["combine/statue/wetFlute"] = value139;
+			_g.h["combine/sparks/yellowWeeds"] = value139;
 		}
 	}
 	{
 		var value140 = ["The FLUTE is of much more use to you than it is to this STATUE."];
+		if(__map_reserved["combine/statue/wetFlute"] != null) {
+			_g.setReserved("combine/statue/wetFlute",value140);
+		} else {
+			_g.h["combine/statue/wetFlute"] = value140;
+		}
+	}
+	{
+		var value141 = ["The FLUTE is of much more use to you than it is to this STATUE."];
 		if(__map_reserved["combine/statue/yellowFlute"] != null) {
-			_g.setReserved("combine/statue/yellowFlute",value140);
+			_g.setReserved("combine/statue/yellowFlute",value141);
 		} else {
-			_g.h["combine/statue/yellowFlute"] = value140;
+			_g.h["combine/statue/yellowFlute"] = value141;
 		}
 	}
 	{
-		var value141 = ["You don't want to put anything on this TABLE, it looks like it hasn't been wiped down in the last century or so."];
+		var value142 = ["You don't want to put anything on this TABLE, it looks like it hasn't been wiped down in the last century or so."];
 		if(__map_reserved["combine/table"] != null) {
-			_g.setReserved("combine/table",value141);
+			_g.setReserved("combine/table",value142);
 		} else {
-			_g.h["combine/table"] = value141;
+			_g.h["combine/table"] = value142;
 		}
 	}
 	{
-		var value142 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
+		var value143 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
 		if(__map_reserved["combine/toilet/wetFlute"] != null) {
-			_g.setReserved("combine/toilet/wetFlute",value142);
+			_g.setReserved("combine/toilet/wetFlute",value143);
 		} else {
-			_g.h["combine/toilet/wetFlute"] = value142;
+			_g.h["combine/toilet/wetFlute"] = value143;
 		}
 	}
 	{
-		var value143 = ["They've been in there enough."];
+		var value144 = ["They've been in there enough."];
 		if(__map_reserved["combine/toilet/wetWeeds"] != null) {
-			_g.setReserved("combine/toilet/wetWeeds",value143);
+			_g.setReserved("combine/toilet/wetWeeds",value144);
 		} else {
-			_g.h["combine/toilet/wetWeeds"] = value143;
+			_g.h["combine/toilet/wetWeeds"] = value144;
 		}
 	}
 	{
-		var value144 = ["That's already wet enough."];
+		var value145 = ["That's already wet enough."];
 		if(__map_reserved["combine/toilet/wetcloth"] != null) {
-			_g.setReserved("combine/toilet/wetcloth",value144);
+			_g.setReserved("combine/toilet/wetcloth",value145);
 		} else {
-			_g.h["combine/toilet/wetcloth"] = value144;
+			_g.h["combine/toilet/wetcloth"] = value145;
 		}
 	}
 	{
-		var value145 = ["It doesn't get any wetter than it is."];
+		var value146 = ["It doesn't get any wetter than it is."];
 		if(__map_reserved["combine/toilet/wetrag"] != null) {
-			_g.setReserved("combine/toilet/wetrag",value145);
+			_g.setReserved("combine/toilet/wetrag",value146);
 		} else {
-			_g.h["combine/toilet/wetrag"] = value145;
+			_g.h["combine/toilet/wetrag"] = value146;
 		}
 	}
 	{
-		var value146 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
+		var value147 = ["Since you might still want to put your mouth on the FLUTE, you'd rather not stick it in the TOILET."];
 		if(__map_reserved["combine/toilet/yellowFlute"] != null) {
-			_g.setReserved("combine/toilet/yellowFlute",value146);
+			_g.setReserved("combine/toilet/yellowFlute",value147);
 		} else {
-			_g.h["combine/toilet/yellowFlute"] = value146;
+			_g.h["combine/toilet/yellowFlute"] = value147;
 		}
 	}
 	{
-		var value147 = ["You dunk the yellow WEEDS into the blue, perfumy water of the TOILET. When you pull them out, the chemicals have turned them bright green. They're also very wet now."];
+		var value148 = ["You dunk the yellow WEEDS into the blue, perfumy water of the TOILET. When you pull them out, the chemicals have turned them bright green. They're also very wet now."];
 		if(__map_reserved["combine/toilet/yellowWeeds"] != null) {
-			_g.setReserved("combine/toilet/yellowWeeds",value147);
+			_g.setReserved("combine/toilet/yellowWeeds",value148);
 		} else {
-			_g.h["combine/toilet/yellowWeeds"] = value147;
+			_g.h["combine/toilet/yellowWeeds"] = value148;
 		}
 	}
 	{
-		var value148 = ["Trying to stick that into the VENDING MACHINE only yields you an annoying buzzing sound and the display reads \"INVALID CURRENCY\". Apparently it really does only take symbols of eternal youth.","The VENDING MACHINE only takes symbols of eternal youth."];
+		var value149 = ["Trying to stick that into the VENDING MACHINE only yields you an annoying buzzing sound and the display reads \"INVALID CURRENCY\". Apparently it really does only take symbols of eternal youth.","The VENDING MACHINE only takes symbols of eternal youth."];
 		if(__map_reserved["combine/vendingMachine"] != null) {
-			_g.setReserved("combine/vendingMachine",value148);
+			_g.setReserved("combine/vendingMachine",value149);
 		} else {
-			_g.h["combine/vendingMachine"] = value148;
+			_g.h["combine/vendingMachine"] = value149;
 		}
 	}
 	{
-		var value149 = ["You don't feel like decorating the WALL with that."];
+		var value150 = ["You don't feel like decorating the WALL with that."];
 		if(__map_reserved["combine/wall"] != null) {
-			_g.setReserved("combine/wall",value149);
+			_g.setReserved("combine/wall",value150);
 		} else {
-			_g.h["combine/wall"] = value149;
+			_g.h["combine/wall"] = value150;
 		}
 	}
 	{
-		var value150 = ["It's already full of that."];
+		var value151 = ["It's already full of that."];
 		if(__map_reserved["combine/wetFlute/wetWeeds"] != null) {
-			_g.setReserved("combine/wetFlute/wetWeeds",value150);
+			_g.setReserved("combine/wetFlute/wetWeeds",value151);
 		} else {
-			_g.h["combine/wetFlute/wetWeeds"] = value150;
+			_g.h["combine/wetFlute/wetWeeds"] = value151;
 		}
 	}
 	{
-		var value151 = ["That doesn't need to be wiped down."];
+		var value152 = ["That doesn't need to be wiped down."];
 		if(__map_reserved["combine/wetcloth"] != null) {
-			_g.setReserved("combine/wetcloth",value151);
+			_g.setReserved("combine/wetcloth",value152);
 		} else {
-			_g.h["combine/wetcloth"] = value151;
+			_g.h["combine/wetcloth"] = value152;
 		}
 	}
 	{
-		var value152 = ["You don't need to clean that."];
+		var value153 = ["You don't need to clean that."];
 		if(__map_reserved["combine/wetrag"] != null) {
-			_g.setReserved("combine/wetrag",value152);
+			_g.setReserved("combine/wetrag",value153);
 		} else {
-			_g.h["combine/wetrag"] = value152;
+			_g.h["combine/wetrag"] = value153;
 		}
 	}
 	{
-		var value153 = ["You wouldn't know what you'd use a wet clothrag for. Or a wet ragcloth, if you're left-handed."];
+		var value154 = ["You wouldn't know what you'd use a wet clothrag for. Or a wet ragcloth, if you're left-handed."];
 		if(__map_reserved["combine/wetrag/wetrag"] != null) {
-			_g.setReserved("combine/wetrag/wetrag",value153);
+			_g.setReserved("combine/wetrag/wetrag",value154);
 		} else {
-			_g.h["combine/wetrag/wetrag"] = value153;
+			_g.h["combine/wetrag/wetrag"] = value154;
 		}
 	}
 	{
-		var value154 = ["It's already full of that."];
+		var value155 = ["It's already full of that."];
 		if(__map_reserved["combine/yellowFlute/yellowWeeds"] != null) {
-			_g.setReserved("combine/yellowFlute/yellowWeeds",value154);
+			_g.setReserved("combine/yellowFlute/yellowWeeds",value155);
 		} else {
-			_g.h["combine/yellowFlute/yellowWeeds"] = value154;
+			_g.h["combine/yellowFlute/yellowWeeds"] = value155;
 		}
 	}
 	{
-		var value155 = ["Your spell level is too low to wield FIRE magic."];
+		var value156 = ["Your spell level is too low to wield FIRE magic."];
 		if(__map_reserved["combine/fire/hands"] != null) {
-			_g.setReserved("combine/fire/hands",value155);
+			_g.setReserved("combine/fire/hands",value156);
 		} else {
-			_g.h["combine/fire/hands"] = value155;
+			_g.h["combine/fire/hands"] = value156;
 		}
 	}
 	{
-		var value156 = ["I'm not liquid enough."];
+		var value157 = ["I'm not liquid enough."];
 		if(__map_reserved["drink/narrator"] != null) {
-			_g.setReserved("drink/narrator",value156);
+			_g.setReserved("drink/narrator",value157);
 		} else {
-			_g.h["drink/narrator"] = value156;
+			_g.h["drink/narrator"] = value157;
 		}
 	}
 	{
-		var value157 = ["You're not liquid enough."];
+		var value158 = ["You're not liquid enough."];
 		if(__map_reserved["drink/self"] != null) {
-			_g.setReserved("drink/self",value157);
+			_g.setReserved("drink/self",value158);
 		} else {
-			_g.h["drink/self"] = value157;
+			_g.h["drink/self"] = value158;
 		}
 	}
 	{
-		var value158 = ["That deep blue water looks like it's about three-quarters cleaning agent, so it's probably not drinkable. Although you should probably not be drinking out of a TOILET anyway."];
+		var value159 = ["That deep blue water looks like it's about three-quarters cleaning agent, so it's probably not drinkable. Although you should probably not be drinking out of a TOILET anyway."];
 		if(__map_reserved["drink/toilet"] != null) {
-			_g.setReserved("drink/toilet",value158);
+			_g.setReserved("drink/toilet",value159);
 		} else {
-			_g.h["drink/toilet"] = value158;
+			_g.h["drink/toilet"] = value159;
 		}
 	}
 	{
-		var value159 = ["This DRAGON looks really chubby, eating it would make your cholesterol levels go through the roof!"];
+		var value160 = ["This DRAGON looks really chubby, eating it would make your cholesterol levels go through the roof!"];
 		if(__map_reserved["eat/dragon"] != null) {
-			_g.setReserved("eat/dragon",value159);
+			_g.setReserved("eat/dragon",value160);
 		} else {
-			_g.h["eat/dragon"] = value159;
-		}
-	}
-	{
-		var value160 = ["You chew on the FLUTE. It tastes like dust and clay."];
-		if(__map_reserved["eat/flute"] != null) {
-			_g.setReserved("eat/flute",value160);
-		} else {
-			_g.h["eat/flute"] = value160;
+			_g.h["eat/dragon"] = value160;
 		}
 	}
 	{
 		var value161 = ["You chew on the FLUTE. It tastes like dust and clay."];
+		if(__map_reserved["eat/flute"] != null) {
+			_g.setReserved("eat/flute",value161);
+		} else {
+			_g.h["eat/flute"] = value161;
+		}
+	}
+	{
+		var value162 = ["You chew on the FLUTE. It tastes like dust and clay."];
 		if(__map_reserved["eat/greenFlute"] != null) {
-			_g.setReserved("eat/greenFlute",value161);
+			_g.setReserved("eat/greenFlute",value162);
 		} else {
-			_g.h["eat/greenFlute"] = value161;
+			_g.h["eat/greenFlute"] = value162;
 		}
 	}
 	{
-		var value162 = ["You're pretty sure that's not how you get a kick out of WEEDS."];
+		var value163 = ["You're pretty sure that's not how you get a kick out of WEEDS."];
 		if(__map_reserved["eat/greenWeeds"] != null) {
-			_g.setReserved("eat/greenWeeds",value162);
+			_g.setReserved("eat/greenWeeds",value163);
 		} else {
-			_g.h["eat/greenWeeds"] = value162;
+			_g.h["eat/greenWeeds"] = value163;
 		}
 	}
 	{
-		var value163 = ["You pop the hard wad of CHEWING GUM into your mouth. Surprisingly, it turns back to something chewy very quickly, and even still has a nice fruit punch flavor to it."];
+		var value164 = ["You pop the hard wad of CHEWING GUM into your mouth. Surprisingly, it turns back to something chewy very quickly, and even still has a nice fruit punch flavor to it."];
 		if(__map_reserved["eat/hardGum"] != null) {
-			_g.setReserved("eat/hardGum",value163);
+			_g.setReserved("eat/hardGum",value164);
 		} else {
-			_g.h["eat/hardGum"] = value163;
-		}
-	}
-	{
-		var value164 = ["You chew on the FLUTE. It tastes like dust and clay."];
-		if(__map_reserved["eat/litGreenFlute"] != null) {
-			_g.setReserved("eat/litGreenFlute",value164);
-		} else {
-			_g.h["eat/litGreenFlute"] = value164;
+			_g.h["eat/hardGum"] = value164;
 		}
 	}
 	{
 		var value165 = ["You chew on the FLUTE. It tastes like dust and clay."];
+		if(__map_reserved["eat/litGreenFlute"] != null) {
+			_g.setReserved("eat/litGreenFlute",value165);
+		} else {
+			_g.h["eat/litGreenFlute"] = value165;
+		}
+	}
+	{
+		var value166 = ["You chew on the FLUTE. It tastes like dust and clay."];
 		if(__map_reserved["eat/litYellowFlute"] != null) {
-			_g.setReserved("eat/litYellowFlute",value165);
+			_g.setReserved("eat/litYellowFlute",value166);
 		} else {
-			_g.h["eat/litYellowFlute"] = value165;
+			_g.h["eat/litYellowFlute"] = value166;
 		}
 	}
 	{
-		var value166 = ["Quit chewing your NAILs."];
+		var value167 = ["Quit chewing your NAILs."];
 		if(__map_reserved["eat/nail"] != null) {
-			_g.setReserved("eat/nail",value166);
+			_g.setReserved("eat/nail",value167);
 		} else {
-			_g.h["eat/nail"] = value166;
+			_g.h["eat/nail"] = value167;
 		}
 	}
 	{
-		var value167 = ["No, you need to watch your sodium intake."];
+		var value168 = ["No, you need to watch your sodium intake."];
 		if(__map_reserved["eat/narrator"] != null) {
-			_g.setReserved("eat/narrator",value167);
+			_g.setReserved("eat/narrator",value168);
 		} else {
-			_g.h["eat/narrator"] = value167;
+			_g.h["eat/narrator"] = value168;
 		}
 	}
 	{
-		var value168 = ["You think about eating your shorts, but you don't want to risk being sued for trademark violation."];
+		var value169 = ["You think about eating your shorts, but you don't want to risk being sued for trademark violation."];
 		if(__map_reserved["eat/pants"] != null) {
-			_g.setReserved("eat/pants",value168);
+			_g.setReserved("eat/pants",value169);
 		} else {
-			_g.h["eat/pants"] = value168;
+			_g.h["eat/pants"] = value169;
 		}
 	}
 	{
-		var value169 = ["You're not sure when if your tetanus shots are still good, so you resist sticking the PLUG in your mouth."];
+		var value170 = ["You're not sure when if your tetanus shots are still good, so you resist sticking the PLUG in your mouth."];
 		if(__map_reserved["eat/plug"] != null) {
-			_g.setReserved("eat/plug",value169);
+			_g.setReserved("eat/plug",value170);
 		} else {
-			_g.h["eat/plug"] = value169;
+			_g.h["eat/plug"] = value170;
 		}
 	}
 	{
-		var value170 = ["Auto-cannibalism is not the answer."];
+		var value171 = ["Auto-cannibalism is not the answer."];
 		if(__map_reserved["eat/self"] != null) {
-			_g.setReserved("eat/self",value170);
+			_g.setReserved("eat/self",value171);
 		} else {
-			_g.h["eat/self"] = value170;
+			_g.h["eat/self"] = value171;
 		}
 	}
 	{
-		var value171 = ["You better not! It would draw all the moisture from your body in an instant, leaving you as nothing but a dried-up pile of carbon."];
+		var value172 = ["You better not! It would draw all the moisture from your body in an instant, leaving you as nothing but a dried-up pile of carbon."];
 		if(__map_reserved["eat/silicaGelPacket"] != null) {
-			_g.setReserved("eat/silicaGelPacket",value171);
+			_g.setReserved("eat/silicaGelPacket",value172);
 		} else {
-			_g.h["eat/silicaGelPacket"] = value171;
+			_g.h["eat/silicaGelPacket"] = value172;
 		}
 	}
 	{
-		var value172 = ["You're already chewing it. Probably best to keep it in your mouth, since you wouldn't want it to stick up your inventory."];
+		var value173 = ["You're already chewing it. Probably best to keep it in your mouth, since you wouldn't want it to stick up your inventory."];
 		if(__map_reserved["eat/softGum"] != null) {
-			_g.setReserved("eat/softGum",value172);
+			_g.setReserved("eat/softGum",value173);
 		} else {
-			_g.h["eat/softGum"] = value172;
+			_g.h["eat/softGum"] = value173;
 		}
 	}
 	{
-		var value173 = ["It being a questionable food source aside, none of this TRASH is edible."];
+		var value174 = ["It being a questionable food source aside, none of this TRASH is edible."];
 		if(__map_reserved["eat/trash"] != null) {
-			_g.setReserved("eat/trash",value173);
+			_g.setReserved("eat/trash",value174);
 		} else {
-			_g.h["eat/trash"] = value173;
+			_g.h["eat/trash"] = value174;
 		}
 	}
 	{
-		var value174 = ["You chew on the FLUTE. It tastes like dust and clay."];
+		var value175 = ["You chew on the FLUTE. It tastes like dust and clay."];
 		if(__map_reserved["eat/wetFlute"] != null) {
-			_g.setReserved("eat/wetFlute",value174);
+			_g.setReserved("eat/wetFlute",value175);
 		} else {
-			_g.h["eat/wetFlute"] = value174;
+			_g.h["eat/wetFlute"] = value175;
 		}
 	}
 	{
-		var value175 = ["You're pretty sure that's not how you get a kick out of WEEDS."];
+		var value176 = ["You're pretty sure that's not how you get a kick out of WEEDS."];
 		if(__map_reserved["eat/wetWeeds"] != null) {
-			_g.setReserved("eat/wetWeeds",value175);
+			_g.setReserved("eat/wetWeeds",value176);
 		} else {
-			_g.h["eat/wetWeeds"] = value175;
+			_g.h["eat/wetWeeds"] = value176;
 		}
 	}
 	{
-		var value176 = ["You chew on the FLUTE. It tastes like dust and clay."];
+		var value177 = ["You chew on the FLUTE. It tastes like dust and clay."];
 		if(__map_reserved["eat/yellowFlute"] != null) {
-			_g.setReserved("eat/yellowFlute",value176);
+			_g.setReserved("eat/yellowFlute",value177);
 		} else {
-			_g.h["eat/yellowFlute"] = value176;
+			_g.h["eat/yellowFlute"] = value177;
 		}
 	}
 	{
-		var value177 = ["You're pretty sure that's not how you get a kick out of WEEDS."];
+		var value178 = ["You're pretty sure that's not how you get a kick out of WEEDS."];
 		if(__map_reserved["eat/yellowWeeds"] != null) {
-			_g.setReserved("eat/yellowWeeds",value177);
+			_g.setReserved("eat/yellowWeeds",value178);
 		} else {
-			_g.h["eat/yellowWeeds"] = value177;
+			_g.h["eat/yellowWeeds"] = value178;
 		}
 	}
 	{
-		var value178 = ["With a mighty leap, you jump up and grab the DRAGON's snout. It looks at you in surprise as you ball your hand into a fist and strike right between its eyes, leaving a nasty bruise and smashing its glasses. You handily land back on the ground, while the DRAGON reels and lands on its backside. It starts sobbing and begs you to not hurt it anymore. It can't see anything without its GLASSES, which lay broken on the floor."];
+		var value179 = ["With a mighty leap, you jump up and grab the DRAGON's snout. It looks at you in surprise as you ball your hand into a fist and strike right between its eyes, leaving a nasty bruise and smashing its glasses. You handily land back on the ground, while the DRAGON reels and lands on its backside. It starts sobbing and begs you to not hurt it anymore. It can't see anything without its GLASSES, which lay broken on the floor."];
 		if(__map_reserved["fightDragon1"] != null) {
-			_g.setReserved("fightDragon1",value178);
+			_g.setReserved("fightDragon1",value179);
 		} else {
-			_g.h["fightDragon1"] = value178;
+			_g.h["fightDragon1"] = value179;
 		}
 	}
 	{
-		var value179 = ["Amazing, you vanquished the DRAGON with your bare hands! While it's still just sitting there, crying and shivering, you search through its belongings. Its wallet only contains reward cards from supermarkets and family restaurants, but the GREETING CARD in its shirt pocket has TWENTY DOLLARS in it! You take it and yell \"now be gone, fatso!\" With a miserable howl, the DRAGON rolls to its feet, wobbles up the STAIRS and runs into the wilderness."];
+		var value180 = ["Amazing, you vanquished the DRAGON with your bare hands! While it's still just sitting there, crying and shivering, you search through its belongings. Its wallet only contains reward cards from supermarkets and family restaurants, but the GREETING CARD in its shirt pocket has TWENTY DOLLARS in it! You take it and yell \"now be gone, fatso!\" With a miserable howl, the DRAGON rolls to its feet, wobbles up the STAIRS and runs into the wilderness."];
 		if(__map_reserved["fightDragon2"] != null) {
-			_g.setReserved("fightDragon2",value179);
+			_g.setReserved("fightDragon2",value180);
 		} else {
-			_g.h["fightDragon2"] = value179;
+			_g.h["fightDragon2"] = value180;
 		}
 	}
 	{
-		var value180 = ["You somehow re-enter the BOSS ROOM."];
+		var value181 = ["You somehow re-enter the BOSS ROOM."];
 		if(__map_reserved["go/bossRoom"] != null) {
-			_g.setReserved("go/bossRoom",value180);
+			_g.setReserved("go/bossRoom",value181);
 		} else {
-			_g.h["go/bossRoom"] = value180;
+			_g.h["go/bossRoom"] = value181;
 		}
 	}
 	{
-		var value181 = ["You visit the CAFETERIA."];
+		var value182 = ["You visit the CAFETERIA."];
 		if(__map_reserved["go/cafeteria"] != null) {
-			_g.setReserved("go/cafeteria",value181);
+			_g.setReserved("go/cafeteria",value182);
 		} else {
-			_g.h["go/cafeteria"] = value181;
+			_g.h["go/cafeteria"] = value182;
 		}
 	}
 	{
-		var value182 = ["You're already flaming enough."];
+		var value183 = ["You're already flaming enough."];
 		if(__map_reserved["go/fire"] != null) {
-			_g.setReserved("go/fire",value182);
+			_g.setReserved("go/fire",value183);
 		} else {
-			_g.h["go/fire"] = value182;
+			_g.h["go/fire"] = value183;
 		}
 	}
 	{
-		var value183 = ["Maybe you can be the narrator in some other game, if you manage get out of this one."];
+		var value184 = ["Maybe you can be the narrator in some other game, if you manage get out of this one."];
 		if(__map_reserved["go/narrator"] != null) {
-			_g.setReserved("go/narrator",value183);
+			_g.setReserved("go/narrator",value184);
 		} else {
-			_g.h["go/narrator"] = value183;
+			_g.h["go/narrator"] = value184;
 		}
 	}
 	{
-		var value184 = ["You try to jump into the painting, expecting it to take you to stage 1. It doesn't work though, you just hit your head and fall to the floor.","Your last interaction has disillusioned you enough already."];
+		var value185 = ["You try to jump into the painting, expecting it to take you to stage 1. It doesn't work though, you just hit your head and fall to the floor.","Your last interaction has disillusioned you enough already."];
 		if(__map_reserved["go/painting"] != null) {
-			_g.setReserved("go/painting",value184);
+			_g.setReserved("go/painting",value185);
 		} else {
-			_g.h["go/painting"] = value184;
+			_g.h["go/painting"] = value185;
 		}
 	}
 	{
-		var value185 = ["Okay, you're back in the RESTROOM."];
+		var value186 = ["Okay, you're back in the RESTROOM."];
 		if(__map_reserved["go/restroom"] != null) {
-			_g.setReserved("go/restroom",value185);
+			_g.setReserved("go/restroom",value186);
 		} else {
-			_g.h["go/restroom"] = value185;
+			_g.h["go/restroom"] = value186;
 		}
 	}
 	{
-		var value186 = ["You grab the handle and walk forward, expecting the DOOR to yield to you. But it's locked, so you just awkwardly bump into it.","The DOOR is still locked, you can't go through."];
+		var value187 = ["You grab the handle and walk forward, expecting the DOOR to yield to you. But it's locked, so you just awkwardly bump into it.","The DOOR is still locked, you can't go through."];
 		if(__map_reserved["go/restroomdoor"] != null) {
-			_g.setReserved("go/restroomdoor",value186);
+			_g.setReserved("go/restroomdoor",value187);
 		} else {
-			_g.h["go/restroomdoor"] = value186;
+			_g.h["go/restroomdoor"] = value187;
 		}
 	}
 	{
-		var value187 = ["You're already there."];
+		var value188 = ["You're already there."];
 		if(__map_reserved["go/room"] != null) {
-			_g.setReserved("go/room",value187);
+			_g.setReserved("go/room",value188);
 		} else {
-			_g.h["go/room"] = value187;
+			_g.h["go/room"] = value188;
 		}
 	}
 	{
-		var value188 = ["You make your way down the stairs of the SECRET PASSAGE."];
+		var value189 = ["You make your way down the stairs of the SECRET PASSAGE."];
 		if(__map_reserved["go/secretPassage"] != null) {
-			_g.setReserved("go/secretPassage",value188);
+			_g.setReserved("go/secretPassage",value189);
 		} else {
-			_g.h["go/secretPassage"] = value188;
+			_g.h["go/secretPassage"] = value189;
 		}
 	}
 	{
-		var value189 = ["You close your eyes and go into yourself. You return to a calm and collected state. Then you wake up from your power nap.","You go into yourself again, but you're not exhausted enough to have another nap."];
+		var value190 = ["You close your eyes and go into yourself. You return to a calm and collected state. Then you wake up from your power nap.","You go into yourself again, but you're not exhausted enough to have another nap."];
 		if(__map_reserved["go/self"] != null) {
-			_g.setReserved("go/self",value189);
+			_g.setReserved("go/self",value190);
 		} else {
-			_g.h["go/self"] = value189;
+			_g.h["go/self"] = value190;
 		}
 	}
 	{
-		var value190 = ["You enter the unattended SOUVENIER SHOP."];
+		var value191 = ["You enter the unattended SOUVENIER SHOP."];
 		if(__map_reserved["go/souvenierShop"] != null) {
-			_g.setReserved("go/souvenierShop",value190);
+			_g.setReserved("go/souvenierShop",value191);
 		} else {
-			_g.h["go/souvenierShop"] = value190;
+			_g.h["go/souvenierShop"] = value191;
 		}
 	}
 	{
-		var value191 = ["Having heroically vanquished the DRAGON like a true adventurer, you proudly stride out of the EXIT. Clutching the TWENTY DOLLARS of lunch money in your bare hands of terror, you make your way to the nearest store to buy some new clothes and a sandwich or something. The GREETING CARD lies forgotten on the floor, since the DRAGON is sure to lose its job and its mother's support after being defeated so easily.\n\nYou ascribe pit in your stomach to the feeling of accomplishment and glory."];
+		var value192 = ["Having heroically vanquished the DRAGON like a true adventurer, you proudly stride out of the EXIT. Clutching the TWENTY DOLLARS of lunch money in your bare hands of terror, you make your way to the nearest store to buy some new clothes and a sandwich or something. The GREETING CARD lies forgotten on the floor, since the DRAGON is sure to lose its job and its mother's support after being defeated so easily.\n\nYou ascribe pit in your stomach to the feeling of accomplishment and glory."];
 		if(__map_reserved["go/stairs"] != null) {
-			_g.setReserved("go/stairs",value191);
+			_g.setReserved("go/stairs",value192);
 		} else {
-			_g.h["go/stairs"] = value191;
+			_g.h["go/stairs"] = value192;
 		}
 	}
 	{
-		var value192 = ["You GO full BARD, dancing around and singing at the top of your lungs. But it gets exhausting quickly, so you stop doing that.","No, you've realized that the BARD life isn't for you."];
+		var value193 = ["You GO full BARD, dancing around and singing at the top of your lungs. But it gets exhausting quickly, so you stop doing that.","No, you've realized that the BARD life isn't for you."];
 		if(__map_reserved["go/statue"] != null) {
-			_g.setReserved("go/statue",value192);
+			_g.setReserved("go/statue",value193);
 		} else {
-			_g.h["go/statue"] = value192;
+			_g.h["go/statue"] = value193;
 		}
 	}
 	{
-		var value193 = ["You return to the TEMPLE."];
+		var value194 = ["You return to the TEMPLE."];
 		if(__map_reserved["go/temple"] != null) {
-			_g.setReserved("go/temple",value193);
+			_g.setReserved("go/temple",value194);
 		} else {
-			_g.h["go/temple"] = value193;
+			_g.h["go/temple"] = value194;
 		}
 	}
 	{
-		var value194 = ["Aw, come on. You're not some kind of trash that sulks in a can all day. You're supposed to go out and dance in the streets, turning everyone's heads in awe, making them say: \"Wow, that's the most obnoxious piece of furry trash I've ever seen!\""];
+		var value195 = ["Aw, come on. You're not some kind of trash that sulks in a can all day. You're supposed to go out and dance in the streets, turning everyone's heads in awe, making them say: \"Wow, that's the most obnoxious piece of furry trash I've ever seen!\""];
 		if(__map_reserved["go/trashcan"] != null) {
-			_g.setReserved("go/trashcan",value194);
+			_g.setReserved("go/trashcan",value195);
 		} else {
-			_g.h["go/trashcan"] = value194;
+			_g.h["go/trashcan"] = value195;
 		}
 	}
 	{
-		var value195 = ["There are three types of commands:\n\nA single word, like LOOK or INVENTORY. This will just do something, like look around the room or tell you what you have in your inventory.\n\nA verb and a noun, like LOOK AT THING or OPEN DOOR. This will try to do the action to the thing, like telling you what the thing looks like or opening the door.\n\nA verb and two nouns, like COMBINE ICE WITH CREAM. This will try to put the two things together, like producing ice cream (which is totally logical)."];
+		var value196 = ["There are three types of commands:\n\nA single word, like LOOK or INVENTORY. This will just do something, like look around the room or tell you what you have in your inventory.\n\nA verb and a noun, like LOOK AT THING or OPEN DOOR. This will try to do the action to the thing, like telling you what the thing looks like or opening the door.\n\nA verb and two nouns, like COMBINE ICE WITH CREAM. This will try to put the two things together, like producing ice cream (which is totally logical)."];
 		if(__map_reserved["help_commands"] != null) {
-			_g.setReserved("help_commands",value195);
+			_g.setReserved("help_commands",value196);
 		} else {
-			_g.h["help_commands"] = value195;
+			_g.h["help_commands"] = value196;
 		}
 	}
 	{
-		var value196 = ["These are the most common commands. To save you some typing, you can abbreviate them with their first letter (like I instead of INVENTORY or U instead of USE).\n\n* INVENTORY\n\n* LOOK\n\n* LOOK/USE/TAKE/SPEAK (something)\n\n* GO (somewhere)\n\n* COMBINE (something) WITH (something else)"];
+		var value197 = ["These are the most common commands. To save you some typing, you can abbreviate them with their first letter (like I instead of INVENTORY or U instead of USE).\n\n* INVENTORY\n\n* LOOK\n\n* LOOK/USE/TAKE/SPEAK (something)\n\n* GO (somewhere)\n\n* COMBINE (something) WITH (something else)"];
 		if(__map_reserved["help_common"] != null) {
-			_g.setReserved("help_common",value196);
+			_g.setReserved("help_common",value197);
 		} else {
-			_g.h["help_common"] = value196;
+			_g.h["help_common"] = value197;
 		}
 	}
 	{
-		var value197 = ["This is a text adventure game. You type simple commands as to what you want to do any get responses from the computer.\n\nYou progress by figuring out the inventory object puzzles. This involves picking up stuff, combining it with other stuff and using your own deductive skills.\n\nYou can't die or make the game unwinnable (even though you'll no doubt try your hardest.)"];
+		var value198 = ["This is a text adventure game. You type simple commands as to what you want to do any get responses from the computer.\n\nYou progress by figuring out the inventory object puzzles. This involves picking up stuff, combining it with other stuff and using your own deductive skills.\n\nYou can't die or make the game unwinnable (even though you'll no doubt try your hardest.)"];
 		if(__map_reserved["help_game"] != null) {
-			_g.setReserved("help_game",value197);
+			_g.setReserved("help_game",value198);
 		} else {
-			_g.h["help_game"] = value197;
+			_g.h["help_game"] = value198;
 		}
 	}
 	{
-		var value198 = ["The HELP will try to HELP you if you give it a sensible topic."];
+		var value199 = ["The HELP will try to HELP you if you give it a sensible topic."];
 		if(__map_reserved["help_help"] != null) {
-			_g.setReserved("help_help",value198);
+			_g.setReserved("help_help",value199);
 		} else {
-			_g.h["help_help"] = value198;
+			_g.h["help_help"] = value199;
 		}
 	}
 	{
-		var value199 = ["You're beyond HELP."];
+		var value200 = ["You're beyond HELP."];
 		if(__map_reserved["help_me"] != null) {
-			_g.setReserved("help_me",value199);
+			_g.setReserved("help_me",value200);
 		} else {
-			_g.h["help_me"] = value199;
+			_g.h["help_me"] = value200;
 		}
 	}
 	{
-		var value200 = ["If you forget what's in a room, just type LOOK.\n\nPick up everything that isn't nailed down. And if it is nailed down, figure out a way to pull out the nails.\n\nYou can GO to rooms you've been to before directly, no need to traverse every room along the way.\n\nIf you're stuck, look at everything you have and read the descriptions attentively, they may give you a hint.\n\nThink outside the box and think literally - this game is made out of text after all."];
+		var value201 = ["If you forget what's in a room, just type LOOK.\n\nPick up everything that isn't nailed down. And if it is nailed down, figure out a way to pull out the nails.\n\nYou can GO to rooms you've been to before directly, no need to traverse every room along the way.\n\nIf you're stuck, look at everything you have and read the descriptions attentively, they may give you a hint.\n\nThink outside the box and think literally - this game is made out of text after all."];
 		if(__map_reserved["help_tips"] != null) {
-			_g.setReserved("help_tips",value200);
+			_g.setReserved("help_tips",value201);
 		} else {
-			_g.h["help_tips"] = value200;
+			_g.h["help_tips"] = value201;
 		}
 	}
 	{
-		var value201 = ["Thank you, how considerate."];
+		var value202 = ["Thank you, how considerate."];
 		if(__map_reserved["help_yourself"] != null) {
-			_g.setReserved("help_yourself",value201);
+			_g.setReserved("help_yourself",value202);
 		} else {
-			_g.h["help_yourself"] = value201;
+			_g.h["help_yourself"] = value202;
 		}
 	}
 	{
-		var value202 = ["Thanks to the testers: Cole, Hierro, Javeloz, miles57, Scaper, Smuggs, Soraime, Spike, Xelios.\n\nAdditional Puzzle Design by Smuggs.\n\n3D Models for the Secret Leopard Mode by miles57.\n\nWritten by askmeaboutloom."];
+		var value203 = ["Thanks to the testers: Cole, Hierro, Javeloz, miles57, Scaper, Smuggs, Soraime, Spike, Xelios.\n\nAdditional Puzzle Design by Smuggs.\n\n3D Models for the Secret Leopard Mode by miles57.\n\nWritten by askmeaboutloom."];
 		if(__map_reserved["just_credits"] != null) {
-			_g.setReserved("just_credits",value202);
+			_g.setReserved("just_credits",value203);
 		} else {
-			_g.h["just_credits"] = value202;
+			_g.h["just_credits"] = value203;
 		}
 	}
 	{
-		var value203 = ["I forgive you.","That's alright.","No problem.","Don't worry about it.","What you've done is beyond apologies."];
+		var value204 = ["I forgive you.","That's alright.","No problem.","Don't worry about it.","What you've done is beyond apologies."];
 		if(__map_reserved["just_apologize"] != null) {
-			_g.setReserved("just_apologize",value203);
+			_g.setReserved("just_apologize",value204);
 		} else {
-			_g.h["just_apologize"] = value203;
+			_g.h["just_apologize"] = value204;
 		}
 	}
 	{
-		var value204 = ["You suddenly realize you haven't been breathing this entire time. You look down on yourself and it dawns on you: you've actually been a robot all along!\n\nOh wait, nevermind, you've just been breathing subconsciously.","Actually, now that you think about it, you haven't actually been breathing this entire time! That can only mean one thing: you've been dead all along.\n\nOr alternatively, breathing is just not something you have to think about to be doing. That's more likely actually.","You breathe in and suddenly see your vision flicker. You look at your hands and it happens again! Oh no, you know what that means - you're a hologram!\n\nHold on, actually, you were just blinking. Phew."];
+		var value205 = ["You suddenly realize you haven't been breathing this entire time. You look down on yourself and it dawns on you: you've actually been a robot all along!\n\nOh wait, nevermind, you've just been breathing subconsciously.","Actually, now that you think about it, you haven't actually been breathing this entire time! That can only mean one thing: you've been dead all along.\n\nOr alternatively, breathing is just not something you have to think about to be doing. That's more likely actually.","You breathe in and suddenly see your vision flicker. You look at your hands and it happens again! Oh no, you know what that means - you're a hologram!\n\nHold on, actually, you were just blinking. Phew."];
 		if(__map_reserved["just_breathe"] != null) {
-			_g.setReserved("just_breathe",value204);
+			_g.setReserved("just_breathe",value205);
 		} else {
-			_g.h["just_breathe"] = value204;
+			_g.h["just_breathe"] = value205;
 		}
 	}
 	{
-		var value205 = ["Your vision goes black. A split-second later, it returns."];
+		var value206 = ["Your vision goes black. A split-second later, it returns."];
 		if(__map_reserved["just_blink"] != null) {
-			_g.setReserved("just_blink",value205);
+			_g.setReserved("just_blink",value206);
 		} else {
-			_g.h["just_blink"] = value205;
+			_g.h["just_blink"] = value206;
 		}
 	}
 	{
-		var value206 = ["You suddenly lose all vision on your left eye. Luckily, it's back to normal a moment later.","You suddenly lose all vision on your right eye. Luckily, it's back to normal a moment later."];
+		var value207 = ["You suddenly lose all vision on your left eye. Luckily, it's back to normal a moment later.","You suddenly lose all vision on your right eye. Luckily, it's back to normal a moment later."];
 		if(__map_reserved["just_wink"] != null) {
-			_g.setReserved("just_wink",value206);
+			_g.setReserved("just_wink",value207);
 		} else {
-			_g.h["just_wink"] = value206;
+			_g.h["just_wink"] = value207;
 		}
 	}
 	{
-		var value207 = ["ASCEND where?"];
+		var value208 = ["ASCEND where?"];
 		if(__map_reserved["just_ascend"] != null) {
-			_g.setReserved("just_ascend",value207);
+			_g.setReserved("just_ascend",value208);
 		} else {
-			_g.h["just_ascend"] = value207;
+			_g.h["just_ascend"] = value208;
 		}
 	}
 	{
-		var value208 = ["BITE what?"];
+		var value209 = ["BITE what?"];
 		if(__map_reserved["just_bite"] != null) {
-			_g.setReserved("just_bite",value208);
+			_g.setReserved("just_bite",value209);
 		} else {
-			_g.h["just_bite"] = value208;
+			_g.h["just_bite"] = value209;
 		}
 	}
 	{
-		var value209 = ["CHECK what?"];
+		var value210 = ["CHECK what?"];
 		if(__map_reserved["just_check"] != null) {
-			_g.setReserved("just_check",value209);
+			_g.setReserved("just_check",value210);
 		} else {
-			_g.h["just_check"] = value209;
+			_g.h["just_check"] = value210;
 		}
 	}
 	{
-		var value210 = ["CLAMBER what?"];
+		var value211 = ["CLAMBER what?"];
 		if(__map_reserved["just_clamber"] != null) {
-			_g.setReserved("just_clamber",value210);
+			_g.setReserved("just_clamber",value211);
 		} else {
-			_g.h["just_clamber"] = value210;
+			_g.h["just_clamber"] = value211;
 		}
 	}
 	{
-		var value211 = ["You clap your hands."];
+		var value212 = ["You clap your hands."];
 		if(__map_reserved["just_clap"] != null) {
-			_g.setReserved("just_clap",value211);
+			_g.setReserved("just_clap",value212);
 		} else {
-			_g.h["just_clap"] = value211;
+			_g.h["just_clap"] = value212;
 		}
 	}
 	{
-		var value212 = ["CLIMB what?"];
+		var value213 = ["CLIMB what?"];
 		if(__map_reserved["just_climb"] != null) {
-			_g.setReserved("just_climb",value212);
+			_g.setReserved("just_climb",value213);
 		} else {
-			_g.h["just_climb"] = value212;
+			_g.h["just_climb"] = value213;
 		}
 	}
 	{
-		var value213 = ["CONVERSE with whom?"];
+		var value214 = ["CONVERSE with whom?"];
 		if(__map_reserved["just_converse"] != null) {
-			_g.setReserved("just_converse",value213);
+			_g.setReserved("just_converse",value214);
 		} else {
-			_g.h["just_converse"] = value213;
+			_g.h["just_converse"] = value214;
 		}
 	}
 	{
-		var value214 = ["You curl into a ball on the floor and have a little time to yourself. You do feel a little better afterwards.","You break out in tears at the unfairness of it all. It has no effect on the cruel world around you.","You look over your shoulder, with a serious expression of desperation on your face. A single tear rolls down your cheek.","You start sobbing uncontrollably. It takes several minutes before you calm down again, but you've regained some of your motivation.","You lose your composure and start bawling your eyes out. You don't stop until your throat hurts and your voice is raspy. However, after having a little whinge, you feel more determined than ever."];
+		var value215 = ["You curl into a ball on the floor and have a little time to yourself. You do feel a little better afterwards.","You break out in tears at the unfairness of it all. It has no effect on the cruel world around you.","You look over your shoulder, with a serious expression of desperation on your face. A single tear rolls down your cheek.","You start sobbing uncontrollably. It takes several minutes before you calm down again, but you've regained some of your motivation.","You lose your composure and start bawling your eyes out. You don't stop until your throat hurts and your voice is raspy. However, after having a little whinge, you feel more determined than ever."];
 		if(__map_reserved["just_cry"] != null) {
-			_g.setReserved("just_cry",value214);
+			_g.setReserved("just_cry",value215);
 		} else {
-			_g.h["just_cry"] = value214;
+			_g.h["just_cry"] = value215;
 		}
 	}
 	{
-		var value215 = ["You cannot.","Surrender is not an option.","But you still have so much to live for!","Aw come on, you're not that desperate yet.","If you really want to quit, refresh the page."];
+		var value216 = ["You cannot.","Surrender is not an option.","But you still have so much to live for!","Aw come on, you're not that desperate yet.","If you really want to quit, refresh the page."];
 		if(__map_reserved["just_die"] != null) {
-			_g.setReserved("just_die",value215);
+			_g.setReserved("just_die",value216);
 		} else {
-			_g.h["just_die"] = value215;
+			_g.h["just_die"] = value216;
 		}
 	}
 	{
-		var value216 = ["DRINK what?"];
+		var value217 = ["DRINK what?"];
 		if(__map_reserved["just_drink"] != null) {
-			_g.setReserved("just_drink",value216);
+			_g.setReserved("just_drink",value217);
 		} else {
-			_g.h["just_drink"] = value216;
+			_g.h["just_drink"] = value217;
 		}
 	}
 	{
-		var value217 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		var value218 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
 		if(__map_reserved["just_drop"] != null) {
-			_g.setReserved("just_drop",value217);
+			_g.setReserved("just_drop",value218);
 		} else {
-			_g.h["just_drop"] = value217;
+			_g.h["just_drop"] = value218;
 		}
 	}
 	{
-		var value218 = ["EAT what?"];
+		var value219 = ["EAT what?"];
 		if(__map_reserved["just_eat"] != null) {
-			_g.setReserved("just_eat",value218);
+			_g.setReserved("just_eat",value219);
 		} else {
-			_g.h["just_eat"] = value218;
+			_g.h["just_eat"] = value219;
 		}
 	}
 	{
-		var value219 = ["ENTER where?"];
+		var value220 = ["ENTER where?"];
 		if(__map_reserved["just_enter"] != null) {
-			_g.setReserved("just_enter",value219);
+			_g.setReserved("just_enter",value220);
 		} else {
-			_g.h["just_enter"] = value219;
+			_g.h["just_enter"] = value220;
 		}
 	}
 	{
-		var value220 = ["EXAMINE what?"];
+		var value221 = ["EXAMINE what?"];
 		if(__map_reserved["just_examine"] != null) {
-			_g.setReserved("just_examine",value220);
+			_g.setReserved("just_examine",value221);
 		} else {
-			_g.h["just_examine"] = value220;
+			_g.h["just_examine"] = value221;
 		}
 	}
 	{
-		var value221 = ["You FLEX your muscles. It intimidates no one."];
+		var value222 = ["Forget it, I'm not gonna narrate that."];
+		if(__map_reserved["just_fap"] != null) {
+			_g.setReserved("just_fap",value222);
+		} else {
+			_g.h["just_fap"] = value222;
+		}
+	}
+	{
+		var value223 = ["You FLEX your muscles. It intimidates no one."];
 		if(__map_reserved["just_flex"] != null) {
-			_g.setReserved("just_flex",value221);
+			_g.setReserved("just_flex",value223);
 		} else {
-			_g.h["just_flex"] = value221;
+			_g.h["just_flex"] = value223;
 		}
 	}
 	{
-		var value222 = ["GET what?"];
+		var value224 = ["GET what?"];
 		if(__map_reserved["just_get"] != null) {
-			_g.setReserved("just_get",value222);
+			_g.setReserved("just_get",value224);
 		} else {
-			_g.h["just_get"] = value222;
+			_g.h["just_get"] = value224;
 		}
 	}
 	{
-		var value223 = ["GO where?"];
+		var value225 = ["GO where?"];
 		if(__map_reserved["just_go"] != null) {
-			_g.setReserved("just_go",value223);
+			_g.setReserved("just_go",value225);
 		} else {
-			_g.h["just_go"] = value223;
+			_g.h["just_go"] = value225;
 		}
 	}
 	{
-		var value224 = ["GOBBLE what?"];
+		var value226 = ["GOBBLE what?"];
 		if(__map_reserved["just_gobble"] != null) {
-			_g.setReserved("just_gobble",value224);
+			_g.setReserved("just_gobble",value226);
 		} else {
-			_g.h["just_gobble"] = value224;
+			_g.h["just_gobble"] = value226;
 		}
 	}
 	{
-		var value225 = ["GOTO where?"];
+		var value227 = ["GOTO where?"];
 		if(__map_reserved["just_goto"] != null) {
-			_g.setReserved("just_goto",value225);
+			_g.setReserved("just_goto",value227);
 		} else {
-			_g.h["just_goto"] = value225;
+			_g.h["just_goto"] = value227;
 		}
 	}
 	{
-		var value226 = ["GRAB what?"];
+		var value228 = ["GRAB what?"];
 		if(__map_reserved["just_grab"] != null) {
-			_g.setReserved("just_grab",value226);
+			_g.setReserved("just_grab",value228);
 		} else {
-			_g.h["just_grab"] = value226;
+			_g.h["just_grab"] = value228;
 		}
 	}
 	{
-		var value227 = ["GULP what?"];
+		var value229 = ["GULP what?"];
 		if(__map_reserved["just_gulp"] != null) {
-			_g.setReserved("just_gulp",value227);
+			_g.setReserved("just_gulp",value229);
 		} else {
-			_g.h["just_gulp"] = value227;
+			_g.h["just_gulp"] = value229;
 		}
 	}
 	{
-		var value228 = ["Type a topic you want help about:\n\n* HELP GAME\n\n* HELP COMMANDS\n\n* HELP COMMON\n\n* HELP TIPS"];
+		var value230 = ["Type a topic you want help about:\n\n* HELP GAME\n\n* HELP COMMANDS\n\n* HELP COMMON\n\n* HELP TIPS"];
 		if(__map_reserved["just_help"] != null) {
-			_g.setReserved("just_help",value228);
+			_g.setReserved("just_help",value230);
 		} else {
-			_g.h["just_help"] = value228;
+			_g.h["just_help"] = value230;
 		}
 	}
 	{
-		var value229 = ["INSPECT what?"];
+		var value231 = ["INSPECT what?"];
 		if(__map_reserved["just_inspect"] != null) {
-			_g.setReserved("just_inspect",value229);
+			_g.setReserved("just_inspect",value231);
 		} else {
-			_g.h["just_inspect"] = value229;
+			_g.h["just_inspect"] = value231;
 		}
 	}
 	{
-		var value230 = ["INVESTIGATE what?"];
+		var value232 = ["INVESTIGATE what?"];
 		if(__map_reserved["just_investigate"] != null) {
-			_g.setReserved("just_investigate",value230);
+			_g.setReserved("just_investigate",value232);
 		} else {
-			_g.h["just_investigate"] = value230;
+			_g.h["just_investigate"] = value232;
 		}
 	}
 	{
-		var value231 = ["You're too weak.","Don't be so aggressive.","You don't have the guts.","Your strength is too low.","You don't want to risk retaliation.","No, you might hurt yourself doing that.","Maybe you should look into your violent tendencies."];
+		var value233 = ["You're too weak.","Don't be so aggressive.","You don't have the guts.","Your strength is too low.","You don't want to risk retaliation.","No, you might hurt yourself doing that.","Maybe you should look into your violent tendencies."];
 		if(__map_reserved["just_kill"] != null) {
-			_g.setReserved("just_kill",value231);
+			_g.setReserved("just_kill",value233);
 		} else {
-			_g.h["just_kill"] = value231;
+			_g.h["just_kill"] = value233;
 		}
 	}
 	{
-		var value232 = ["Aren't you a happy cookie."];
+		var value234 = ["Aren't you a happy cookie."];
 		if(__map_reserved["just_laugh"] != null) {
-			_g.setReserved("just_laugh",value232);
+			_g.setReserved("just_laugh",value234);
 		} else {
-			_g.h["just_laugh"] = value232;
+			_g.h["just_laugh"] = value234;
 		}
 	}
 	{
-		var value233 = ["Good idea, but this actually isn't the right place for that. But props to getting that many points."];
+		var value235 = ["Good idea, but this actually isn't the right place for that. But props to getting that many points."];
 		if(__map_reserved["just_kludgey"] != null) {
-			_g.setReserved("just_kludgey",value233);
+			_g.setReserved("just_kludgey",value235);
 		} else {
-			_g.h["just_kludgey"] = value233;
+			_g.h["just_kludgey"] = value235;
 		}
 	}
 	{
-		var value234 = ["Nice try, but this isn't the place where you're supposed to use that."];
+		var value236 = ["Nice try, but this isn't the place where you're supposed to use that."];
 		if(__map_reserved["just_typeglob"] != null) {
-			_g.setReserved("just_typeglob",value234);
+			_g.setReserved("just_typeglob",value236);
 		} else {
-			_g.h["just_typeglob"] = value234;
+			_g.h["just_typeglob"] = value236;
 		}
 	}
 	{
-		var value235 = ["Are you from the future? At the time this animation came out, that code hadn't been released yet."];
+		var value237 = ["Are you from the future? At the time this animation came out, that code hadn't been released yet."];
 		if(__map_reserved["just_spiderbaby"] != null) {
-			_g.setReserved("just_spiderbaby",value235);
+			_g.setReserved("just_spiderbaby",value237);
 		} else {
-			_g.h["just_spiderbaby"] = value235;
-		}
-	}
-	{
-		var value236 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
-		if(__map_reserved["just_lay"] != null) {
-			_g.setReserved("just_lay",value236);
-		} else {
-			_g.h["just_lay"] = value236;
-		}
-	}
-	{
-		var value237 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
-		if(__map_reserved["just_laze"] != null) {
-			_g.setReserved("just_laze",value237);
-		} else {
-			_g.h["just_laze"] = value237;
+			_g.h["just_spiderbaby"] = value237;
 		}
 	}
 	{
 		var value238 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		if(__map_reserved["just_lay"] != null) {
+			_g.setReserved("just_lay",value238);
+		} else {
+			_g.h["just_lay"] = value238;
+		}
+	}
+	{
+		var value239 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		if(__map_reserved["just_laze"] != null) {
+			_g.setReserved("just_laze",value239);
+		} else {
+			_g.h["just_laze"] = value239;
+		}
+	}
+	{
+		var value240 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
 		if(__map_reserved["just_lie"] != null) {
-			_g.setReserved("just_lie",value238);
+			_g.setReserved("just_lie",value240);
 		} else {
-			_g.h["just_lie"] = value238;
+			_g.h["just_lie"] = value240;
 		}
 	}
 	{
-		var value239 = ["LOOK at what?"];
+		var value241 = ["LOOK at what?"];
 		if(__map_reserved["just_look"] != null) {
-			_g.setReserved("just_look",value239);
+			_g.setReserved("just_look",value241);
 		} else {
-			_g.h["just_look"] = value239;
+			_g.h["just_look"] = value241;
 		}
 	}
 	{
-		var value240 = ["MOUNT what?"];
+		var value242 = ["MOUNT what?"];
 		if(__map_reserved["just_mount"] != null) {
-			_g.setReserved("just_mount",value240);
+			_g.setReserved("just_mount",value242);
 		} else {
-			_g.h["just_mount"] = value240;
+			_g.h["just_mount"] = value242;
 		}
 	}
 	{
-		var value241 = ["MUNCH what?"];
+		var value243 = ["MUNCH what?"];
 		if(__map_reserved["just_munch"] != null) {
-			_g.setReserved("just_munch",value241);
+			_g.setReserved("just_munch",value243);
 		} else {
-			_g.h["just_munch"] = value241;
+			_g.h["just_munch"] = value243;
 		}
 	}
 	{
-		var value242 = ["NIBBLE what?"];
+		var value244 = ["NIBBLE what?"];
 		if(__map_reserved["just_nibble"] != null) {
-			_g.setReserved("just_nibble",value242);
+			_g.setReserved("just_nibble",value244);
 		} else {
-			_g.h["just_nibble"] = value242;
+			_g.h["just_nibble"] = value244;
 		}
 	}
 	{
-		var value243 = ["Yes.","Yup.","Yeah.","Mh-hm.","Uh, yes.","Positive."];
+		var value245 = ["Yes.","Yup.","Yeah.","Mh-hm.","Uh, yes.","Positive."];
 		if(__map_reserved["just_no"] != null) {
-			_g.setReserved("just_no",value243);
+			_g.setReserved("just_no",value245);
 		} else {
-			_g.h["just_no"] = value243;
+			_g.h["just_no"] = value245;
 		}
 	}
 	{
-		var value244 = ["PICK what?"];
+		var value246 = ["PICK what?"];
 		if(__map_reserved["just_pick"] != null) {
-			_g.setReserved("just_pick",value244);
+			_g.setReserved("just_pick",value246);
 		} else {
-			_g.h["just_pick"] = value244;
+			_g.h["just_pick"] = value246;
 		}
 	}
 	{
-		var value245 = ["A hollow voice says \"nothing happens.\""];
+		var value247 = ["A hollow voice says \"nothing happens.\""];
 		if(__map_reserved["just_plugh"] != null) {
-			_g.setReserved("just_plugh",value245);
+			_g.setReserved("just_plugh",value247);
 		} else {
-			_g.h["just_plugh"] = value245;
+			_g.h["just_plugh"] = value247;
 		}
 	}
 	{
-		var value246 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		var value248 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
 		if(__map_reserved["just_rest"] != null) {
-			_g.setReserved("just_rest",value246);
+			_g.setReserved("just_rest",value248);
 		} else {
-			_g.h["just_rest"] = value246;
+			_g.h["just_rest"] = value248;
 		}
 	}
 	{
-		var value247 = ["SCALE what?"];
+		var value249 = ["SCALE what?"];
 		if(__map_reserved["just_scale"] != null) {
-			_g.setReserved("just_scale",value247);
+			_g.setReserved("just_scale",value249);
 		} else {
-			_g.h["just_scale"] = value247;
+			_g.h["just_scale"] = value249;
 		}
 	}
 	{
-		var value248 = ["SEE what?"];
+		var value250 = ["SEE what?"];
 		if(__map_reserved["just_see"] != null) {
-			_g.setReserved("just_see",value248);
+			_g.setReserved("just_see",value250);
 		} else {
-			_g.h["just_see"] = value248;
+			_g.h["just_see"] = value250;
 		}
 	}
 	{
-		var value249 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		var value251 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
 		if(__map_reserved["just_sit"] != null) {
-			_g.setReserved("just_sit",value249);
+			_g.setReserved("just_sit",value251);
 		} else {
-			_g.h["just_sit"] = value249;
+			_g.h["just_sit"] = value251;
 		}
 	}
 	{
-		var value250 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		var value252 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
 		if(__map_reserved["just_sleep"] != null) {
-			_g.setReserved("just_sleep",value250);
+			_g.setReserved("just_sleep",value252);
 		} else {
-			_g.h["just_sleep"] = value250;
+			_g.h["just_sleep"] = value252;
 		}
 	}
 	{
-		var value251 = ["SLURP what?"];
+		var value253 = ["SLURP what?"];
 		if(__map_reserved["just_slurp"] != null) {
-			_g.setReserved("just_slurp",value251);
+			_g.setReserved("just_slurp",value253);
 		} else {
-			_g.h["just_slurp"] = value251;
+			_g.h["just_slurp"] = value253;
 		}
 	}
 	{
-		var value252 = ["SMELL what?"];
+		var value254 = ["SMELL what?"];
 		if(__map_reserved["just_smell"] != null) {
-			_g.setReserved("just_smell",value252);
+			_g.setReserved("just_smell",value254);
 		} else {
-			_g.h["just_smell"] = value252;
+			_g.h["just_smell"] = value254;
 		}
 	}
 	{
-		var value253 = ["SNIFF what?"];
+		var value255 = ["SNIFF what?"];
 		if(__map_reserved["just_sniff"] != null) {
-			_g.setReserved("just_sniff",value253);
+			_g.setReserved("just_sniff",value255);
 		} else {
-			_g.h["just_sniff"] = value253;
+			_g.h["just_sniff"] = value255;
 		}
 	}
 	{
-		var value254 = ["SPEAK to whom?"];
+		var value256 = ["SPEAK to whom?"];
 		if(__map_reserved["just_speak"] != null) {
-			_g.setReserved("just_speak",value254);
+			_g.setReserved("just_speak",value256);
 		} else {
-			_g.h["just_speak"] = value254;
+			_g.h["just_speak"] = value256;
 		}
 	}
 	{
-		var value255 = ["STAND on what?"];
+		var value257 = ["STAND on what?"];
 		if(__map_reserved["just_stand"] != null) {
-			_g.setReserved("just_stand",value255);
+			_g.setReserved("just_stand",value257);
 		} else {
-			_g.h["just_stand"] = value255;
+			_g.h["just_stand"] = value257;
 		}
 	}
 	{
-		var value256 = ["STEP on what?"];
+		var value258 = ["STEP on what?"];
 		if(__map_reserved["just_step"] != null) {
-			_g.setReserved("just_step",value256);
+			_g.setReserved("just_step",value258);
 		} else {
-			_g.h["just_step"] = value256;
+			_g.h["just_step"] = value258;
 		}
 	}
 	{
-		var value257 = ["STOMP on what?"];
+		var value259 = ["STOMP on what?"];
 		if(__map_reserved["just_stomp"] != null) {
-			_g.setReserved("just_stomp",value257);
+			_g.setReserved("just_stomp",value259);
 		} else {
-			_g.h["just_stomp"] = value257;
+			_g.h["just_stomp"] = value259;
 		}
 	}
 	{
-		var value258 = ["TAKE what?"];
+		var value260 = ["TAKE what?"];
 		if(__map_reserved["just_take"] != null) {
-			_g.setReserved("just_take",value258);
+			_g.setReserved("just_take",value260);
 		} else {
-			_g.h["just_take"] = value258;
+			_g.h["just_take"] = value260;
 		}
 	}
 	{
-		var value259 = ["TALK to whom?"];
+		var value261 = ["TALK to whom?"];
 		if(__map_reserved["just_talk"] != null) {
-			_g.setReserved("just_talk",value259);
+			_g.setReserved("just_talk",value261);
 		} else {
-			_g.h["just_talk"] = value259;
+			_g.h["just_talk"] = value261;
 		}
 	}
 	{
-		var value260 = ["VIEW what?"];
+		var value262 = ["VIEW what?"];
 		if(__map_reserved["just_view"] != null) {
-			_g.setReserved("just_view",value260);
+			_g.setReserved("just_view",value262);
 		} else {
-			_g.h["just_view"] = value260;
+			_g.h["just_view"] = value262;
 		}
 	}
 	{
-		var value261 = ["VISIT what?"];
+		var value263 = ["VISIT what?"];
 		if(__map_reserved["just_visit"] != null) {
-			_g.setReserved("just_visit",value261);
+			_g.setReserved("just_visit",value263);
 		} else {
-			_g.h["just_visit"] = value261;
+			_g.h["just_visit"] = value263;
 		}
 	}
 	{
-		var value262 = ["WALK where?"];
+		var value264 = ["WALK where?"];
 		if(__map_reserved["just_walk"] != null) {
-			_g.setReserved("just_walk",value262);
+			_g.setReserved("just_walk",value264);
 		} else {
-			_g.h["just_walk"] = value262;
+			_g.h["just_walk"] = value264;
 		}
 	}
 	{
-		var value263 = ["WATCH what?"];
+		var value265 = ["WATCH what?"];
 		if(__map_reserved["just_watch"] != null) {
-			_g.setReserved("just_watch",value263);
+			_g.setReserved("just_watch",value265);
 		} else {
-			_g.h["just_watch"] = value263;
+			_g.h["just_watch"] = value265;
 		}
 	}
 	{
-		var value264 = ["Nothing happens."];
+		var value266 = ["Nothing happens."];
 		if(__map_reserved["just_xyzzy"] != null) {
-			_g.setReserved("just_xyzzy",value264);
+			_g.setReserved("just_xyzzy",value266);
 		} else {
-			_g.h["just_xyzzy"] = value264;
+			_g.h["just_xyzzy"] = value266;
 		}
 	}
 	{
-		var value265 = ["No.","Nah.","Nope.","Nuh-uh.","Um, no.","Negatory."];
+		var value267 = ["No.","Nah.","Nope.","Nuh-uh.","Um, no.","Negatory."];
 		if(__map_reserved["just_yes"] != null) {
-			_g.setReserved("just_yes",value265);
+			_g.setReserved("just_yes",value267);
 		} else {
-			_g.h["just_yes"] = value265;
+			_g.h["just_yes"] = value267;
 		}
 	}
 	{
-		var value266 = ["It's the only thing that's left of the SLAP CHOP after you slapped it: a dull BLADE stuck in the table."];
+		var value268 = ["It's the only thing that's left of the SLAP CHOP after you slapped it: a dull BLADE stuck in the table."];
 		if(__map_reserved["look/_bladeInTable"] != null) {
-			_g.setReserved("look/_bladeInTable",value266);
+			_g.setReserved("look/_bladeInTable",value268);
 		} else {
-			_g.h["look/_bladeInTable"] = value266;
+			_g.h["look/_bladeInTable"] = value268;
 		}
 	}
 	{
-		var value267 = ["The VENDING MACHINE is empty now and the display just reads \"SOLD OUT\"."];
+		var value269 = ["The VENDING MACHINE is empty now and the display just reads \"SOLD OUT\"."];
 		if(__map_reserved["look/_emptyMachine"] != null) {
-			_g.setReserved("look/_emptyMachine",value267);
+			_g.setReserved("look/_emptyMachine",value269);
 		} else {
-			_g.h["look/_emptyMachine"] = value267;
+			_g.h["look/_emptyMachine"] = value269;
 		}
 	}
 	{
-		var value268 = ["It's an intricate hydraulic network connected to the DOOR. Once upon a time it was probably a pretty sweet mechanism, but now it's all rusted up. You made a makeshift patch for the hole in the PIPES from a rusty NAIL and some CHEWING GUM."];
+		var value270 = ["It's an intricate hydraulic network connected to the DOOR. Once upon a time it was probably a pretty sweet mechanism, but now it's all rusted up. You made a makeshift patch for the hole in the PIPES from a rusty NAIL and some CHEWING GUM."];
 		if(__map_reserved["look/_fixedPipes"] != null) {
-			_g.setReserved("look/_fixedPipes",value268);
+			_g.setReserved("look/_fixedPipes",value270);
 		} else {
-			_g.h["look/_fixedPipes"] = value268;
+			_g.h["look/_fixedPipes"] = value270;
 		}
 	}
 	{
-		var value269 = ["It's an intricate hydraulic network connected to the DOOR. Once upon a time it was probably a pretty sweet mechanism, but now it's all rusted up. You put some CHEWING GUM around the rim of the hole in the PIPES, but it doesn't come close to covering it."];
+		var value271 = ["It's an intricate hydraulic network connected to the DOOR. Once upon a time it was probably a pretty sweet mechanism, but now it's all rusted up. You put some CHEWING GUM around the rim of the hole in the PIPES, but it doesn't come close to covering it."];
 		if(__map_reserved["look/_gumPipes"] != null) {
-			_g.setReserved("look/_gumPipes",value269);
+			_g.setReserved("look/_gumPipes",value271);
 		} else {
-			_g.h["look/_gumPipes"] = value269;
+			_g.h["look/_gumPipes"] = value271;
 		}
 	}
 	{
-		var value270 = ["It's an intricate hydraulic network connected to the DOOR. Once upon a time it was probably a pretty sweet mechanism, but now it's all rusted up. There's even a hole in one of the PIPES, about as big around as your wrist."];
+		var value272 = ["It's an intricate hydraulic network connected to the DOOR. Once upon a time it was probably a pretty sweet mechanism, but now it's all rusted up. There's even a hole in one of the PIPES, about as big around as your wrist."];
 		if(__map_reserved["look/_holePipes"] != null) {
-			_g.setReserved("look/_holePipes",value270);
+			_g.setReserved("look/_holePipes",value272);
 		} else {
-			_g.h["look/_holePipes"] = value270;
+			_g.h["look/_holePipes"] = value272;
 		}
 	}
 	{
-		var value271 = ["It's a lonely bag of original flavor BEEF JERKY. From the looks of it, it's the last of its kind. Who knows how long it's been in there."];
+		var value273 = ["It's a lonely bag of original flavor BEEF JERKY. From the looks of it, it's the last of its kind. Who knows how long it's been in there."];
 		if(__map_reserved["look/_jerkyInMachine"] != null) {
-			_g.setReserved("look/_jerkyInMachine",value271);
+			_g.setReserved("look/_jerkyInMachine",value273);
 		} else {
-			_g.h["look/_jerkyInMachine"] = value271;
+			_g.h["look/_jerkyInMachine"] = value273;
 		}
 	}
 	{
-		var value272 = ["It's a big old NAIL, about the size of your hand. It's stuck way high up on the wall and holding up the PAINTING."];
+		var value274 = ["It's a big old NAIL, about the size of your hand. It's stuck way high up on the wall and holding up the PAINTING."];
 		if(__map_reserved["look/_nailInWall"] != null) {
-			_g.setReserved("look/_nailInWall",value272);
+			_g.setReserved("look/_nailInWall",value274);
 		} else {
-			_g.h["look/_nailInWall"] = value272;
+			_g.h["look/_nailInWall"] = value274;
 		}
 	}
 	{
-		var value273 = ["It's an intricate hydraulic network connected to the DOOR. Once upon a time it was probably a pretty sweet mechanism, but now it's all rusted up. You stuck your rusty NAIL into the hole in the PIPES, but it's nowhere near airtight."];
+		var value275 = ["It's an intricate hydraulic network connected to the DOOR. Once upon a time it was probably a pretty sweet mechanism, but now it's all rusted up. You stuck your rusty NAIL into the hole in the PIPES, but it's nowhere near airtight."];
 		if(__map_reserved["look/_nailPipes"] != null) {
-			_g.setReserved("look/_nailPipes",value273);
+			_g.setReserved("look/_nailPipes",value275);
 		} else {
-			_g.h["look/_nailPipes"] = value273;
+			_g.h["look/_nailPipes"] = value275;
 		}
 	}
 	{
-		var value274 = ["A smooth stone ALTAR is the center piece of this TEMPLE. It's queen size, but the surface is full of burn marks and doesn't look comfortable."];
+		var value276 = ["A smooth stone ALTAR is the center piece of this TEMPLE. It's queen size, but the surface is full of burn marks and doesn't look comfortable."];
 		if(__map_reserved["look/altar"] != null) {
-			_g.setReserved("look/altar",value274);
+			_g.setReserved("look/altar",value276);
 		} else {
-			_g.h["look/altar"] = value274;
+			_g.h["look/altar"] = value276;
 		}
 	}
 	{
-		var value275 = ["It's some ASH you somehow got in your INVENTORY when you picked up that shiny KEY of yours. And now it's just sticking over everything and you can't get rid of it all."];
+		var value277 = ["It's some ASH you somehow got in your INVENTORY when you picked up that shiny KEY of yours. And now it's just sticking over everything and you can't get rid of it all."];
 		if(__map_reserved["look/ash"] != null) {
-			_g.setReserved("look/ash",value275);
+			_g.setReserved("look/ash",value277);
 		} else {
-			_g.h["look/ash"] = value275;
+			_g.h["look/ash"] = value277;
 		}
 	}
 	{
-		var value276 = ["It's the BLADE out of the SLAP CHOP. It's very dull."];
+		var value278 = ["It's the BLADE out of the SLAP CHOP. It's very dull."];
 		if(__map_reserved["look/blade"] != null) {
-			_g.setReserved("look/blade",value276);
+			_g.setReserved("look/blade",value278);
 		} else {
-			_g.h["look/blade"] = value276;
+			_g.h["look/blade"] = value278;
 		}
 	}
 	{
-		var value277 = ["If you want to take a look at that room, you should probably just GO there."];
+		var value279 = ["If you want to take a look at that room, you should probably just GO there."];
 		if(__map_reserved["look/bossRoom"] != null) {
-			_g.setReserved("look/bossRoom",value277);
+			_g.setReserved("look/bossRoom",value279);
 		} else {
-			_g.h["look/bossRoom"] = value277;
+			_g.h["look/bossRoom"] = value279;
 		}
 	}
 	{
-		var value278 = ["It's some overly complicated WORKOUT EQUIPMENT that's operated with a weird pulley system attached to some weights. The sign on it reads \"BOWFLEX revolution home workout equipment - now with 20% less long-term damages!\""];
+		var value280 = ["It's some overly complicated WORKOUT EQUIPMENT that's operated with a weird pulley system attached to some weights. The sign on it reads \"BOWFLEX revolution home workout equipment - now with 20% less long-term damages!\""];
 		if(__map_reserved["look/bowflex"] != null) {
-			_g.setReserved("look/bowflex",value278);
+			_g.setReserved("look/bowflex",value280);
 		} else {
-			_g.h["look/bowflex"] = value278;
+			_g.h["look/bowflex"] = value280;
 		}
 	}
 	{
-		var value279 = ["It's the little pair of GLASSES that the DRAGON had on its nose. Your punch shattered and bent it up beyond repair.","You know, the DRAGON is now wandering through the wilderness all alone, without being able to see anything. Oh, but I'm sure you did what you had to do, self defense and all that.","How about next time you blow up a light bulb I don't warn you and you can't see anything anymore. How would that feel?","Umm, I mean, it's just a pair of GLASSES that were broken when you... heroically vanquished the DRAGON.\n\nPlease don't hurt me.","Broken GLASSES, a testament of your... heroic deeds."];
+		var value281 = ["It's the little pair of GLASSES that the DRAGON had on its nose. Your punch shattered and bent it up beyond repair.","You know, the DRAGON is now wandering through the wilderness all alone, without being able to see anything. Oh, but I'm sure you did what you had to do, self defense and all that.","How about next time you blow up a light bulb I don't warn you and you can't see anything anymore. How would that feel?","Umm, I mean, it's just a pair of GLASSES that were broken when you... heroically vanquished the DRAGON.\n\nPlease don't hurt me.","Broken GLASSES, a testament of your... heroic deeds."];
 		if(__map_reserved["look/brokenGlasses"] != null) {
-			_g.setReserved("look/brokenGlasses",value279);
+			_g.setReserved("look/brokenGlasses",value281);
 		} else {
-			_g.h["look/brokenGlasses"] = value279;
+			_g.h["look/brokenGlasses"] = value281;
 		}
 	}
 	{
-		var value280 = ["If you want to take a look at that room, you should probably just GO there."];
+		var value282 = ["If you want to take a look at that room, you should probably just GO there."];
 		if(__map_reserved["look/cafeteria"] != null) {
-			_g.setReserved("look/cafeteria",value280);
+			_g.setReserved("look/cafeteria",value282);
 		} else {
-			_g.h["look/cafeteria"] = value280;
+			_g.h["look/cafeteria"] = value282;
 		}
 	}
 	{
-		var value281 = ["It's a fascinating CEILING."];
+		var value283 = ["It's a fascinating CEILING."];
 		if(__map_reserved["look/ceiling"] != null) {
-			_g.setReserved("look/ceiling",value281);
+			_g.setReserved("look/ceiling",value283);
 		} else {
-			_g.h["look/ceiling"] = value281;
+			_g.h["look/ceiling"] = value283;
 		}
 	}
 	{
-		var value282 = ["It's a pink wad of dry CHEWING GUM, firmly stuck to the underside of the TABLE."];
+		var value284 = ["It's a pink wad of dry CHEWING GUM, firmly stuck to the underside of the TABLE."];
 		if(__map_reserved["look/chewingGum"] != null) {
-			_g.setReserved("look/chewingGum",value282);
+			_g.setReserved("look/chewingGum",value284);
 		} else {
-			_g.h["look/chewingGum"] = value282;
+			_g.h["look/chewingGum"] = value284;
 		}
 	}
 	{
-		var value283 = ["It's some kind of desk lamp sitting on a podium, but it's just a bare stick, without any lampshade. A sign on the podium reads \"The Clapper - With Three Intensity Settings\"."];
+		var value285 = ["It's some kind of desk lamp sitting on a podium, but it's just a bare stick, without any lampshade. A sign on the podium reads \"The Clapper - With Three Intensity Settings\"."];
 		if(__map_reserved["look/clapper"] != null) {
-			_g.setReserved("look/clapper",value283);
+			_g.setReserved("look/clapper",value285);
 		} else {
-			_g.h["look/clapper"] = value283;
+			_g.h["look/clapper"] = value285;
 		}
 	}
 	{
-		var value284 = ["Well, they're your CLOTHES. Nothing fancy. Not implying that you don't know how to dress properly, it just didn't fit the occasion. No one would expect you to wear something other than rags to a text adventure game."];
+		var value286 = ["Well, they're your CLOTHES. Nothing fancy. Not implying that you don't know how to dress properly, it just didn't fit the occasion. No one would expect you to wear something other than rags to a text adventure game."];
 		if(__map_reserved["look/clothes"] != null) {
-			_g.setReserved("look/clothes",value284);
+			_g.setReserved("look/clothes",value286);
 		} else {
-			_g.h["look/clothes"] = value284;
+			_g.h["look/clothes"] = value286;
 		}
 	}
 	{
-		var value285 = ["It's a fiersome DRAGON! Its long, spiked tail twitches restlessly, its man-sized claws scrape the ground underneath and smoke is rising from its flaring nostrils. Which is fogging up the little, square glasses sitting on its nose.","The large DRAGON stares back at you, looking determined and fearless. Its fingers are fiddling with his badly-tied tie, while his other hand firmly grips a greeting card in its DRESS SHIRT pocket for reassurance.","It's getting kinda awkward to have you stare at the DRAGON so much. It shakily opens his mouth to say something, but then chokes on its own smoke and enters a coughing fit.","The DRAGON has recovered from its coughing and is looking embarrassed. Its breath has gotten quick and it seems to be sweating nervously. The situation is getting dangerously uncomfortable.","The poor little DRAGON just looks around the room, evading your stare."];
+		var value287 = ["It's a fiersome DRAGON! Its long, spiked tail twitches restlessly, its man-sized claws scrape the ground underneath and smoke is rising from its flaring nostrils. Which is fogging up the little, square glasses sitting on its nose.","The large DRAGON stares back at you, looking determined and fearless. Its fingers are fiddling with his badly-tied tie, while his other hand firmly grips a greeting card in its DRESS SHIRT pocket for reassurance.","It's getting kinda awkward to have you stare at the DRAGON so much. It shakily opens his mouth to say something, but then chokes on its own smoke and enters a coughing fit.","The DRAGON has recovered from its coughing and is looking embarrassed. Its breath has gotten quick and it seems to be sweating nervously. The situation is getting dangerously uncomfortable.","The poor little DRAGON just looks around the room, evading your stare."];
 		if(__map_reserved["look/dragon"] != null) {
-			_g.setReserved("look/dragon",value285);
+			_g.setReserved("look/dragon",value287);
 		} else {
-			_g.h["look/dragon"] = value285;
+			_g.h["look/dragon"] = value287;
 		}
 	}
 	{
-		var value286 = ["The DRAGON is wearing a DRESS SHIRT that seems to be a bit too small for its chubby stature. Around its neck hangs a tie that looks like it's been tied by someone who'd never done it before. In the shirt pocket you can spot a greeting card depicting a cartoon bunny rabbit wishing the greetee all the best for a new job."];
+		var value288 = ["The DRAGON is wearing a DRESS SHIRT that seems to be a bit too small for its chubby stature. Around its neck hangs a tie that looks like it's been tied by someone who'd never done it before. In the shirt pocket you can spot a greeting card depicting a cartoon bunny rabbit wishing the greetee all the best for a new job."];
 		if(__map_reserved["look/dressShirt"] != null) {
-			_g.setReserved("look/dressShirt",value286);
+			_g.setReserved("look/dressShirt",value288);
 		} else {
-			_g.h["look/dressShirt"] = value286;
+			_g.h["look/dressShirt"] = value288;
 		}
 	}
 	{
-		var value287 = ["It's a large, wooden DOOR with a glowing \"exit\" sign above it. It doesn't have a handle though, instead it seems to be operated by that LEVER next to it."];
+		var value289 = ["It's a large, wooden DOOR with a glowing \"exit\" sign above it. It doesn't have a handle though, instead it seems to be operated by that LEVER next to it."];
 		if(__map_reserved["look/exitDoor"] != null) {
-			_g.setReserved("look/exitDoor",value287);
+			_g.setReserved("look/exitDoor",value289);
 		} else {
-			_g.h["look/exitDoor"] = value287;
+			_g.h["look/exitDoor"] = value289;
 		}
 	}
 	{
-		var value288 = ["All you see is FIRE. But in the back of your mind, the SHINY THING inside it is still calling for your taking."];
+		var value290 = ["All you see is FIRE. But in the back of your mind, the SHINY THING inside it is still calling for your taking."];
 		if(__map_reserved["look/fire"] != null) {
-			_g.setReserved("look/fire",value288);
+			_g.setReserved("look/fire",value290);
 		} else {
-			_g.h["look/fire"] = value288;
+			_g.h["look/fire"] = value290;
 		}
 	}
 	{
-		var value289 = ["Well, it sure is a FLOOR. And you're standing on it."];
+		var value291 = ["Well, it sure is a FLOOR. And you're standing on it."];
 		if(__map_reserved["look/floor"] != null) {
-			_g.setReserved("look/floor",value289);
+			_g.setReserved("look/floor",value291);
 		} else {
-			_g.h["look/floor"] = value289;
+			_g.h["look/floor"] = value291;
 		}
 	}
 	{
-		var value290 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out."];
+		var value292 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out."];
 		if(__map_reserved["look/flute"] != null) {
-			_g.setReserved("look/flute",value290);
+			_g.setReserved("look/flute",value292);
 		} else {
-			_g.h["look/flute"] = value290;
+			_g.h["look/flute"] = value292;
 		}
 	}
 	{
-		var value291 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. You stuffed some dry, green WEEDS into it"];
+		var value293 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. You stuffed some dry, green WEEDS into it"];
 		if(__map_reserved["look/greenFlute"] != null) {
-			_g.setReserved("look/greenFlute",value291);
+			_g.setReserved("look/greenFlute",value293);
 		} else {
-			_g.h["look/greenFlute"] = value291;
+			_g.h["look/greenFlute"] = value293;
 		}
 	}
 	{
-		var value292 = ["It's a stash of dry, green WEEDS. You should probably get rid of it before you get arrested."];
+		var value294 = ["It's a stash of dry, green WEEDS. You should probably get rid of it before you get arrested."];
 		if(__map_reserved["look/greenWeeds"] != null) {
-			_g.setReserved("look/greenWeeds",value292);
+			_g.setReserved("look/greenWeeds",value294);
 		} else {
-			_g.h["look/greenWeeds"] = value292;
+			_g.h["look/greenWeeds"] = value294;
 		}
 	}
 	{
-		var value293 = ["It's the GREETING CARD you took from the DRAGON as your spoils. It's got a cartoon bunny rabbit on the front wishing the reader all the best for a new job. On the inside, a hand-written message, encircled with a heart shape, reads \"I'm so glad you finally got a job! I'm sure you'll do just fine keeping all those adventurers out. Love, mom.\""];
+		var value295 = ["It's the GREETING CARD you took from the DRAGON as your spoils. It's got a cartoon bunny rabbit on the front wishing the reader all the best for a new job. On the inside, a hand-written message, encircled with a heart shape, reads \"I'm so glad you finally got a job! I'm sure you'll do just fine keeping all those adventurers out. Love, mom.\""];
 		if(__map_reserved["look/greetingCard"] != null) {
-			_g.setReserved("look/greetingCard",value293);
+			_g.setReserved("look/greetingCard",value295);
 		} else {
-			_g.h["look/greetingCard"] = value293;
+			_g.h["look/greetingCard"] = value295;
 		}
 	}
 	{
-		var value294 = ["They're your BARE HANDS, soft and gentle."];
+		var value296 = ["They're your BARE HANDS, soft and gentle."];
 		if(__map_reserved["look/hands"] != null) {
-			_g.setReserved("look/hands",value294);
+			_g.setReserved("look/hands",value296);
 		} else {
-			_g.h["look/hands"] = value294;
+			_g.h["look/hands"] = value296;
 		}
 	}
 	{
-		var value295 = ["It's old, it's hard, it's CHEWING GUM."];
+		var value297 = ["It's old, it's hard, it's CHEWING GUM."];
 		if(__map_reserved["look/hardGum"] != null) {
-			_g.setReserved("look/hardGum",value295);
+			_g.setReserved("look/hardGum",value297);
 		} else {
-			_g.h["look/hardGum"] = value295;
+			_g.h["look/hardGum"] = value297;
 		}
 	}
 	{
-		var value296 = ["It's a packet of original flavor BEEF JERKY. Who knows how long it had been in that machine."];
+		var value298 = ["It's a packet of original flavor BEEF JERKY. Who knows how long it had been in that machine."];
 		if(__map_reserved["look/jerky"] != null) {
-			_g.setReserved("look/jerky",value296);
+			_g.setReserved("look/jerky",value298);
 		} else {
-			_g.h["look/jerky"] = value296;
+			_g.h["look/jerky"] = value298;
 		}
 	}
 	{
-		var value297 = ["It's a big LEVER connected to the mechanism of PIPES that operate the DOOR."];
+		var value299 = ["It's a big LEVER connected to the mechanism of PIPES that operate the DOOR."];
 		if(__map_reserved["look/lever"] != null) {
-			_g.setReserved("look/lever",value297);
+			_g.setReserved("look/lever",value299);
 		} else {
-			_g.h["look/lever"] = value297;
+			_g.h["look/lever"] = value299;
 		}
 	}
 	{
-		var value298 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. The green WEEDS inside are smoldering and smoking. The chemical smell is making you feel light-headed."];
+		var value300 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. The green WEEDS inside are smoldering and smoking. The chemical smell is making you feel light-headed."];
 		if(__map_reserved["look/litGreenFlute"] != null) {
-			_g.setReserved("look/litGreenFlute",value298);
+			_g.setReserved("look/litGreenFlute",value300);
 		} else {
-			_g.h["look/litGreenFlute"] = value298;
+			_g.h["look/litGreenFlute"] = value300;
 		}
 	}
 	{
-		var value299 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. The yellow WEEDS inside it are smoldering and smoking. The burning smell is making your head hurt."];
+		var value301 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. The yellow WEEDS inside it are smoldering and smoking. The burning smell is making your head hurt."];
 		if(__map_reserved["look/litYellowFlute"] != null) {
-			_g.setReserved("look/litYellowFlute",value299);
+			_g.setReserved("look/litYellowFlute",value301);
 		} else {
-			_g.h["look/litYellowFlute"] = value299;
+			_g.h["look/litYellowFlute"] = value301;
 		}
 	}
 	{
-		var value300 = ["It's a large rusty NAIL, about the size of your hand."];
+		var value302 = ["It's a large rusty NAIL, about the size of your hand."];
 		if(__map_reserved["look/nail"] != null) {
-			_g.setReserved("look/nail",value300);
+			_g.setReserved("look/nail",value302);
 		} else {
-			_g.h["look/nail"] = value300;
+			_g.h["look/nail"] = value302;
 		}
 	}
 	{
-		var value301 = ["You don't see me, you can only hear my voice in your head."];
+		var value303 = ["You don't see me, you can only hear my voice in your head."];
 		if(__map_reserved["look/narrator"] != null) {
-			_g.setReserved("look/narrator",value301);
+			_g.setReserved("look/narrator",value303);
 		} else {
-			_g.h["look/narrator"] = value301;
+			_g.h["look/narrator"] = value303;
 		}
 	}
 	{
-		var value302 = ["This is a 20 ft tall PAINTING depicting a handful of people sitting around a campfire, puffing smoke from their pipes."];
+		var value304 = ["This is a 20 ft tall PAINTING depicting a handful of people sitting around a campfire, puffing smoke from their pipes."];
 		if(__map_reserved["look/painting"] != null) {
-			_g.setReserved("look/painting",value302);
+			_g.setReserved("look/painting",value304);
 		} else {
-			_g.h["look/painting"] = value302;
+			_g.h["look/painting"] = value304;
 		}
 	}
 	{
-		var value303 = ["Well, PANTS might be stretching it. They're a pair of shorts. Basically a rag with two leg holes in it."];
+		var value305 = ["Well, PANTS might be stretching it. They're a pair of shorts. Basically a rag with two leg holes in it."];
 		if(__map_reserved["look/pants"] != null) {
-			_g.setReserved("look/pants",value303);
+			_g.setReserved("look/pants",value305);
 		} else {
-			_g.h["look/pants"] = value303;
+			_g.h["look/pants"] = value305;
 		}
 	}
 	{
-		var value304 = ["It's the best (and only) PLUG you've ever made. But it's actually just a rusty NAIL with some CHEWING GUM wrapped around it."];
+		var value306 = ["It's the best (and only) PLUG you've ever made. But it's actually just a rusty NAIL with some CHEWING GUM wrapped around it."];
 		if(__map_reserved["look/plug"] != null) {
-			_g.setReserved("look/plug",value304);
+			_g.setReserved("look/plug",value306);
 		} else {
-			_g.h["look/plug"] = value304;
+			_g.h["look/plug"] = value306;
 		}
 	}
 	{
-		var value305 = ["If you want to take a look at that room, you should probably just GO there."];
+		var value307 = ["If you want to take a look at that room, you should probably just GO there."];
 		if(__map_reserved["look/restroom"] != null) {
-			_g.setReserved("look/restroom",value305);
+			_g.setReserved("look/restroom",value307);
 		} else {
-			_g.h["look/restroom"] = value305;
+			_g.h["look/restroom"] = value307;
 		}
 	}
 	{
-		var value306 = ["It's a sturdy wooden DOOR. It's got like a frame and a handle and such, as you would expect."];
+		var value308 = ["It's a sturdy wooden DOOR. It's got like a frame and a handle and such, as you would expect."];
 		if(__map_reserved["look/restroomdoor"] != null) {
-			_g.setReserved("look/restroomdoor",value306);
+			_g.setReserved("look/restroomdoor",value308);
 		} else {
-			_g.h["look/restroomdoor"] = value306;
+			_g.h["look/restroomdoor"] = value308;
 		}
 	}
 	{
-		var value307 = ["You and this small, shiny KEY have had quite the adventure together. You went through fire and flames for each other.\n\nWell, at least one of you did, the other just got naked and dunked things in a TOILET for a while."];
+		var value309 = ["You and this small, shiny KEY have had quite the adventure together. You went through fire and flames for each other.\n\nWell, at least one of you did, the other just got naked and dunked things in a TOILET for a while."];
 		if(__map_reserved["look/restroomkey"] != null) {
-			_g.setReserved("look/restroomkey",value307);
+			_g.setReserved("look/restroomkey",value309);
 		} else {
-			_g.h["look/restroomkey"] = value307;
+			_g.h["look/restroomkey"] = value309;
 		}
 	}
 	{
-		var value308 = ["It's a room."];
+		var value310 = ["It's a room."];
 		if(__map_reserved["look/room"] != null) {
-			_g.setReserved("look/room",value308);
+			_g.setReserved("look/room",value310);
 		} else {
-			_g.h["look/room"] = value308;
+			_g.h["look/room"] = value310;
 		}
 	}
 	{
-		var value309 = ["If you want to take a look at that room, you should probably just GO there."];
+		var value311 = ["If you want to take a look at that room, you should probably just GO there."];
 		if(__map_reserved["look/secretPassage"] != null) {
-			_g.setReserved("look/secretPassage",value309);
+			_g.setReserved("look/secretPassage",value311);
 		} else {
-			_g.h["look/secretPassage"] = value309;
+			_g.h["look/secretPassage"] = value311;
 		}
 	}
 	{
-		var value310 = ["Well, it's a small SHINY THING. It sits at the bottom of the TRASHCAN, amongst the still smoldering ashes of cigarette butts. You can't deny the primal instincts within you making you want to TAKE this SHINY THING with you.","The SHINY THING's shininess is beckoning you to TAKE it. You might get your hands dirty but it'll totally be worth it."];
+		var value312 = ["Well, it's a small SHINY THING. It sits at the bottom of the TRASHCAN, amongst the still smoldering ashes of cigarette butts. You can't deny the primal instincts within you making you want to TAKE this SHINY THING with you.","The SHINY THING's shininess is beckoning you to TAKE it. You might get your hands dirty but it'll totally be worth it."];
 		if(__map_reserved["look/shiny"] != null) {
-			_g.setReserved("look/shiny",value310);
+			_g.setReserved("look/shiny",value312);
 		} else {
-			_g.h["look/shiny"] = value310;
+			_g.h["look/shiny"] = value312;
 		}
 	}
 	{
-		var value311 = ["It's one of those SHIRTs you get in a multi pack from the supermarket. The thin, gray, stringy fabric makes it look like some kind of cloth rather than something wearable."];
+		var value313 = ["It's one of those SHIRTs you get in a multi pack from the supermarket. The thin, gray, stringy fabric makes it look like some kind of cloth rather than something wearable."];
 		if(__map_reserved["look/shirt"] != null) {
-			_g.setReserved("look/shirt",value311);
+			_g.setReserved("look/shirt",value313);
 		} else {
-			_g.h["look/shirt"] = value311;
+			_g.h["look/shirt"] = value313;
 		}
 	}
 	{
-		var value312 = ["It's a SILICA GEL PACKET. One of those inedible little plastic squares that keep the moisture out of food. If you like big words with strange double letters, you may also call it a desiccant."];
+		var value314 = ["It's a SILICA GEL PACKET. One of those inedible little plastic squares that keep the moisture out of food. If you like big words with strange double letters, you may also call it a desiccant."];
 		if(__map_reserved["look/silicaGelPacket"] != null) {
-			_g.setReserved("look/silicaGelPacket",value312);
+			_g.setReserved("look/silicaGelPacket",value314);
 		} else {
-			_g.h["look/silicaGelPacket"] = value312;
+			_g.h["look/silicaGelPacket"] = value314;
 		}
 	}
 	{
-		var value313 = ["It's a small, cylindrical plastic contraption with a button on top that reads \"slap me\". A sign above it describes it as \"The SLAP CHOP - Slap Your Food Cutting Troubles Away\"."];
+		var value315 = ["It's a small, cylindrical plastic contraption with a button on top that reads \"slap me\". A sign above it describes it as \"The SLAP CHOP - Slap Your Food Cutting Troubles Away\"."];
 		if(__map_reserved["look/slapChop"] != null) {
-			_g.setReserved("look/slapChop",value313);
+			_g.setReserved("look/slapChop",value315);
 		} else {
-			_g.h["look/slapChop"] = value313;
+			_g.h["look/slapChop"] = value315;
 		}
 	}
 	{
-		var value314 = ["You take it out of your mouth to take a look at the CHEWING GUM. It's soft, chewy and pink. You put it back into your mouth.","You don't need another look at it, it's just CHEWING GUM."];
+		var value316 = ["You take it out of your mouth to take a look at the CHEWING GUM. It's soft, chewy and pink. You put it back into your mouth.","You don't need another look at it, it's just CHEWING GUM."];
 		if(__map_reserved["look/softGum"] != null) {
-			_g.setReserved("look/softGum",value314);
+			_g.setReserved("look/softGum",value316);
 		} else {
-			_g.h["look/softGum"] = value314;
+			_g.h["look/softGum"] = value316;
 		}
 	}
 	{
-		var value315 = ["It's a bunch of SOOT left over from the TRASHCAN you lit on fire."];
+		var value317 = ["It's a bunch of SOOT left over from the TRASHCAN you lit on fire."];
 		if(__map_reserved["look/soot"] != null) {
-			_g.setReserved("look/soot",value315);
+			_g.setReserved("look/soot",value317);
 		} else {
-			_g.h["look/soot"] = value315;
+			_g.h["look/soot"] = value317;
 		}
 	}
 	{
-		var value316 = ["If you want to take a look at that room, you should probably just GO there."];
+		var value318 = ["If you want to take a look at that room, you should probably just GO there."];
 		if(__map_reserved["look/souvenierShop"] != null) {
-			_g.setReserved("look/souvenierShop",value316);
+			_g.setReserved("look/souvenierShop",value318);
 		} else {
-			_g.h["look/souvenierShop"] = value316;
+			_g.h["look/souvenierShop"] = value318;
 		}
 	}
 	{
-		var value317 = ["There's SPARKS happily spraying from the exposed filament of the ex-lightbulb. They're leaving scorch marks over the podium and floor."];
+		var value319 = ["There's SPARKS happily spraying from the exposed filament of the ex-lightbulb. They're leaving scorch marks over the podium and floor."];
 		if(__map_reserved["look/sparks"] != null) {
-			_g.setReserved("look/sparks",value317);
+			_g.setReserved("look/sparks",value319);
 		} else {
-			_g.h["look/sparks"] = value317;
+			_g.h["look/sparks"] = value319;
 		}
 	}
 	{
-		var value318 = ["It's the STAIRS leading out of this place, sunlight is streaming in. You hear scraps of sobbing and crying still wafting in from the outside every now and then."];
+		var value320 = ["It's the STAIRS leading out of this place, sunlight is streaming in. You hear scraps of sobbing and crying still wafting in from the outside every now and then."];
 		if(__map_reserved["look/stairs"] != null) {
-			_g.setReserved("look/stairs",value318);
+			_g.setReserved("look/stairs",value320);
 		} else {
-			_g.h["look/stairs"] = value318;
+			_g.h["look/stairs"] = value320;
 		}
 	}
 	{
-		var value319 = ["It's a life-sized STATUE made from dark marble. It depicts some kind of bard with frilly clothing a rather dopey expression."];
+		var value321 = ["It's a life-sized STATUE made from dark marble. It depicts some kind of bard with frilly clothing a rather dopey expression."];
 		if(__map_reserved["look/statue"] != null) {
-			_g.setReserved("look/statue",value319);
+			_g.setReserved("look/statue",value321);
 		} else {
-			_g.h["look/statue"] = value319;
+			_g.h["look/statue"] = value321;
 		}
 	}
 	{
-		var value320 = ["It's a cheap, round TABLE made of plastic. The surface has one of those gray patterns that makes it look perpetually dirty, the construction of the legs is less than stellar,"];
+		var value322 = ["It's a cheap, round TABLE made of plastic. The surface has one of those gray patterns that makes it look perpetually dirty, the construction of the legs is less than stellar,"];
 		if(__map_reserved["look/table"] != null) {
-			_g.setReserved("look/table",value320);
+			_g.setReserved("look/table",value322);
 		} else {
-			_g.h["look/table"] = value320;
+			_g.h["look/table"] = value322;
 		}
 	}
 	{
-		var value321 = ["If you want to take a look at that room, you should probably just GO there."];
+		var value323 = ["If you want to take a look at that room, you should probably just GO there."];
 		if(__map_reserved["look/temple"] != null) {
-			_g.setReserved("look/temple",value321);
+			_g.setReserved("look/temple",value323);
 		} else {
-			_g.h["look/temple"] = value321;
+			_g.h["look/temple"] = value323;
 		}
 	}
 	{
-		var value322 = ["Well, it's a TOILET. It's giving this room its restroom-like feel. The porcelain is sparkling clean and the water in the bowl is bright blue, giving off a perfumy scent. You feel a little light-headed from the chemicals."];
+		var value324 = ["Well, it's a TOILET. It's giving this room its restroom-like feel. The porcelain is sparkling clean and the water in the bowl is bright blue, giving off a perfumy scent. You feel a little light-headed from the chemicals."];
 		if(__map_reserved["look/toilet"] != null) {
-			_g.setReserved("look/toilet",value322);
+			_g.setReserved("look/toilet",value324);
 		} else {
-			_g.h["look/toilet"] = value322;
+			_g.h["look/toilet"] = value324;
 		}
 	}
 	{
-		var value323 = ["It's just TRASH. Wads of paper and such.","Just TRASH. Like bits of cardboard.","There's also some wood shavings in this TRASH.","Nothing but TRASH. Paper towels for instance.","Some cans of hair spray are in this TRASH too.","Really, just TRASH here. Tinder for example.","Someone dumped their fireworks in this TRASH.","Boxes of matches also fester amongst the TRASH.","Still just TRASH. Gunpowder is stuck all over it.","Only TRASH. Like half-empty kerosine bottles.",".rand"];
+		var value325 = ["It's just TRASH. Wads of paper and such.","Just TRASH. Like bits of cardboard.","There's also some wood shavings in this TRASH.","Nothing but TRASH. Paper towels for instance.","Some cans of hair spray are in this TRASH too.","Really, just TRASH here. Tinder for example.","Someone dumped their fireworks in this TRASH.","Boxes of matches also fester amongst the TRASH.","Still just TRASH. Gunpowder is stuck all over it.","Only TRASH. Like half-empty kerosine bottles.",".rand"];
 		if(__map_reserved["look/trash"] != null) {
-			_g.setReserved("look/trash",value323);
+			_g.setReserved("look/trash",value325);
 		} else {
-			_g.h["look/trash"] = value323;
+			_g.h["look/trash"] = value325;
 		}
 	}
 	{
-		var value324 = ["You peer into the TRASHCAN. It contains a bunch of TRASH in its natural habitat. However, amongst the cigarette butts at the bottom, a SHINY THING is glistening at you.","There's TRASH in there, but also a SHINY THING buried in the cigarette butts at the bottom."];
+		var value326 = ["You peer into the TRASHCAN. It contains a bunch of TRASH in its natural habitat. However, amongst the cigarette butts at the bottom, a SHINY THING is glistening at you.","There's TRASH in there, but also a SHINY THING buried in the cigarette butts at the bottom."];
 		if(__map_reserved["look/trashcan"] != null) {
-			_g.setReserved("look/trashcan",value324);
+			_g.setReserved("look/trashcan",value326);
 		} else {
-			_g.h["look/trashcan"] = value324;
+			_g.h["look/trashcan"] = value326;
 		}
 	}
 	{
-		var value325 = ["It's TWENTY DOLLARS you took out of the DRAGON's GREETING CARD as your spoils of combat. Which is totally okay, you did vanquish it after all.","No, it's fine, you took those TWENTY DOLLARS fair and square. It's not like the DRAGON's mother gave that to him as a present or anything.","You know, maybe we should call this item \"blood money\" instead.","Alright, alright! It's just a bill of TWENTY DOLLARS, please don't beat me up as well.","It's... just a regular TWENTY DOLLARS."];
+		var value327 = ["It's TWENTY DOLLARS you took out of the DRAGON's GREETING CARD as your spoils of combat. Which is totally okay, you did vanquish it after all.","No, it's fine, you took those TWENTY DOLLARS fair and square. It's not like the DRAGON's mother gave that to him as a present or anything.","You know, maybe we should call this item \"blood money\" instead.","Alright, alright! It's just a bill of TWENTY DOLLARS, please don't beat me up as well.","It's... just a regular TWENTY DOLLARS."];
 		if(__map_reserved["look/twentyDollars"] != null) {
-			_g.setReserved("look/twentyDollars",value325);
+			_g.setReserved("look/twentyDollars",value327);
 		} else {
-			_g.h["look/twentyDollars"] = value325;
+			_g.h["look/twentyDollars"] = value327;
 		}
 	}
 	{
-		var value326 = ["It's one of those weird cult edition VENDING MACHINEs. Instead of a coin slot, there is a funnel and the display above it reads \"INSERT SYMBOL OF ETERNAL YOUTH\". Inside of the machine, there is a single, lonely bag of original flavor BEEF JERKY."];
+		var value328 = ["It's one of those weird cult edition VENDING MACHINEs. Instead of a coin slot, there is a funnel and the display above it reads \"INSERT SYMBOL OF ETERNAL YOUTH\". Inside of the machine, there is a single, lonely bag of original flavor BEEF JERKY."];
 		if(__map_reserved["look/vendingMachine"] != null) {
-			_g.setReserved("look/vendingMachine",value326);
+			_g.setReserved("look/vendingMachine",value328);
 		} else {
-			_g.h["look/vendingMachine"] = value326;
+			_g.h["look/vendingMachine"] = value328;
 		}
 	}
 	{
-		var value327 = ["The WALL is exceedingly vertical."];
+		var value329 = ["The WALL is exceedingly vertical."];
 		if(__map_reserved["look/wall"] != null) {
-			_g.setReserved("look/wall",value327);
+			_g.setReserved("look/wall",value329);
 		} else {
-			_g.h["look/wall"] = value327;
+			_g.h["look/wall"] = value329;
 		}
 	}
 	{
-		var value328 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. You stuffed some wet, green WEEDS into it"];
+		var value330 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. You stuffed some wet, green WEEDS into it"];
 		if(__map_reserved["look/wetFlute"] != null) {
-			_g.setReserved("look/wetFlute",value328);
+			_g.setReserved("look/wetFlute",value330);
 		} else {
-			_g.h["look/wetFlute"] = value328;
+			_g.h["look/wetFlute"] = value330;
 		}
 	}
 	{
-		var value329 = ["It's a wad of wet, green WEEDS. It smells strongly of chemicals, it almost makes your head spin."];
+		var value331 = ["It's a wad of wet, green WEEDS. It smells strongly of chemicals, it almost makes your head spin."];
 		if(__map_reserved["look/wetWeeds"] != null) {
-			_g.setReserved("look/wetWeeds",value329);
+			_g.setReserved("look/wetWeeds",value331);
 		} else {
-			_g.h["look/wetWeeds"] = value329;
+			_g.h["look/wetWeeds"] = value331;
 		}
 	}
 	{
-		var value330 = ["This used to be your SHIRT, but now it's a WET CLOTH. It looks pretty neat now though, the chemicals in the water made it all blue."];
+		var value332 = ["This used to be your SHIRT, but now it's a WET CLOTH. It looks pretty neat now though, the chemicals in the water made it all blue."];
 		if(__map_reserved["look/wetcloth"] != null) {
-			_g.setReserved("look/wetcloth",value330);
+			_g.setReserved("look/wetcloth",value332);
 		} else {
-			_g.h["look/wetcloth"] = value330;
+			_g.h["look/wetcloth"] = value332;
 		}
 	}
 	{
-		var value331 = ["It's your former PANTS, now a WET RAG. Aside from being much more fashionable, it's got a fancy blue color now."];
+		var value333 = ["It's your former PANTS, now a WET RAG. Aside from being much more fashionable, it's got a fancy blue color now."];
 		if(__map_reserved["look/wetrag"] != null) {
-			_g.setReserved("look/wetrag",value331);
+			_g.setReserved("look/wetrag",value333);
 		} else {
-			_g.h["look/wetrag"] = value331;
+			_g.h["look/wetrag"] = value333;
 		}
 	}
 	{
-		var value332 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. You stuffed a bunch of dried, yellow WEEDS into it."];
+		var value334 = ["It's an odd-looking, curved FLUTE with a bulbous end. It doesn't actually look like it'd make for good music, since there's no holes other than the one you blow into and the one air comes out. You stuffed a bunch of dried, yellow WEEDS into it."];
 		if(__map_reserved["look/yellowFlute"] != null) {
-			_g.setReserved("look/yellowFlute",value332);
+			_g.setReserved("look/yellowFlute",value334);
 		} else {
-			_g.h["look/yellowFlute"] = value332;
+			_g.h["look/yellowFlute"] = value334;
 		}
 	}
 	{
-		var value333 = ["It's a bunch of dry, yellow WEEDS. Whatever green they had has withered long ago and now they're just yellow."];
+		var value335 = ["It's a bunch of dry, yellow WEEDS. Whatever green they had has withered long ago and now they're just yellow."];
 		if(__map_reserved["look/yellowWeeds"] != null) {
-			_g.setReserved("look/yellowWeeds",value333);
+			_g.setReserved("look/yellowWeeds",value335);
 		} else {
-			_g.h["look/yellowWeeds"] = value333;
+			_g.h["look/yellowWeeds"] = value335;
 		}
 	}
 	{
-		var value334 = ["It doesn't seem to care for your apologies."];
+		var value336 = ["It doesn't seem to care for your apologies."];
 		if(__map_reserved["no_apologize"] != null) {
-			_g.setReserved("no_apologize",value334);
+			_g.setReserved("no_apologize",value336);
 		} else {
-			_g.h["no_apologize"] = value334;
+			_g.h["no_apologize"] = value336;
 		}
 	}
 	{
-		var value335 = ["You don't have enough mana."];
+		var value337 = ["You don't have enough mana."];
 		if(__map_reserved["no_cast"] != null) {
-			_g.setReserved("no_cast",value335);
+			_g.setReserved("no_cast",value337);
 		} else {
-			_g.h["no_cast"] = value335;
+			_g.h["no_cast"] = value337;
 		}
 	}
 	{
-		var value336 = ["Your climbing skill is too low.","It's not a climbable surface."];
+		var value338 = ["Your climbing skill is too low.","It's not a climbable surface."];
 		if(__map_reserved["no_climb"] != null) {
-			_g.setReserved("no_climb",value336);
+			_g.setReserved("no_climb",value338);
 		} else {
-			_g.h["no_climb"] = value336;
+			_g.h["no_climb"] = value338;
 		}
 	}
 	{
-		var value337 = ["They don't go together.","Don't know how to put those two together"];
+		var value339 = ["They don't go together.","Don't know how to put those two together"];
 		if(__map_reserved["no_combine"] != null) {
-			_g.setReserved("no_combine",value337);
+			_g.setReserved("no_combine",value339);
 		} else {
-			_g.h["no_combine"] = value337;
+			_g.h["no_combine"] = value339;
 		}
 	}
 	{
-		var value338 = ["It's not potable.","That's undrinkable.","You can't get drunk off of that."];
+		var value340 = ["It's not potable.","That's undrinkable.","You can't get drunk off of that."];
 		if(__map_reserved["no_drink"] != null) {
-			_g.setReserved("no_drink",value338);
+			_g.setReserved("no_drink",value340);
 		} else {
-			_g.h["no_drink"] = value338;
+			_g.h["no_drink"] = value340;
 		}
 	}
 	{
-		var value339 = ["You're nowhere near your carrying limit.","Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		var value341 = ["You're nowhere near your carrying limit.","Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
 		if(__map_reserved["no_drop"] != null) {
-			_g.setReserved("no_drop",value339);
+			_g.setReserved("no_drop",value341);
 		} else {
-			_g.h["no_drop"] = value339;
+			_g.h["no_drop"] = value341;
 		}
 	}
 	{
-		var value340 = ["It's inedible.","You couldn't stomach that.","That's not something you can eat."];
+		var value342 = ["It's inedible.","You couldn't stomach that.","That's not something you can eat."];
 		if(__map_reserved["no_eat"] != null) {
-			_g.setReserved("no_eat",value340);
+			_g.setReserved("no_eat",value342);
 		} else {
-			_g.h["no_eat"] = value340;
+			_g.h["no_eat"] = value342;
 		}
 	}
 	{
-		var value341 = ["You call it dumb.","You call it ugly.","You call it silly.","You call it a bum.","You call it smelly.","You call it boring.","You call it a bigot.","You call it ignorant.","You call it offensive.","You call it a dumb thing.","You call it a waste of space.","You call it the worst game object you've ever seen."];
+		var value343 = ["You call it dumb.","You call it ugly.","You call it silly.","You call it a bum.","You call it smelly.","You call it boring.","You call it a bigot.","You call it ignorant.","You call it offensive.","You call it a dumb thing.","You call it a waste of space.","You call it the worst game object you've ever seen."];
 		if(__map_reserved["no_insult"] != null) {
-			_g.setReserved("no_insult",value341);
+			_g.setReserved("no_insult",value343);
 		} else {
-			_g.h["no_insult"] = value341;
+			_g.h["no_insult"] = value343;
 		}
 	}
 	{
-		var value342 = ["Eh?","What? Maybe try typing \"HELP\".","I don't understand you at all.","Does not compute. Please rephrase.","I can't even begin to make sense of that sentence."];
+		var value344 = ["Eh?","What? Maybe try typing \"HELP\".","I don't understand you at all.","Does not compute. Please rephrase.","I can't even begin to make sense of that sentence."];
 		if(__map_reserved["no_interpret"] != null) {
-			_g.setReserved("no_interpret",value342);
+			_g.setReserved("no_interpret",value344);
 		} else {
-			_g.h["no_interpret"] = value342;
+			_g.h["no_interpret"] = value344;
 		}
 	}
 	{
-		var value343 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		var value345 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
 		if(__map_reserved["no_lay"] != null) {
-			_g.setReserved("no_lay",value343);
+			_g.setReserved("no_lay",value345);
 		} else {
-			_g.h["no_lay"] = value343;
-		}
-	}
-	{
-		var value344 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
-		if(__map_reserved["no_laze"] != null) {
-			_g.setReserved("no_laze",value344);
-		} else {
-			_g.h["no_laze"] = value344;
-		}
-	}
-	{
-		var value345 = ["It's unlickable.","Stop that, it's rude.","No, there's germs on it.","You're not putting your lips on that.","Quit it, we can get you a lollipop later if you really need to lick something."];
-		if(__map_reserved["no_lick"] != null) {
-			_g.setReserved("no_lick",value345);
-		} else {
-			_g.h["no_lick"] = value345;
+			_g.h["no_lay"] = value345;
 		}
 	}
 	{
 		var value346 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		if(__map_reserved["no_laze"] != null) {
+			_g.setReserved("no_laze",value346);
+		} else {
+			_g.h["no_laze"] = value346;
+		}
+	}
+	{
+		var value347 = ["It's unlickable.","Stop that, it's rude.","No, there's germs on it.","You're not putting your lips on that.","Quit it, we can get you a lollipop later if you really need to lick something."];
+		if(__map_reserved["no_lick"] != null) {
+			_g.setReserved("no_lick",value347);
+		} else {
+			_g.h["no_lick"] = value347;
+		}
+	}
+	{
+		var value348 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
 		if(__map_reserved["no_lie"] != null) {
-			_g.setReserved("no_lie",value346);
+			_g.setReserved("no_lie",value348);
 		} else {
-			_g.h["no_lie"] = value346;
+			_g.h["no_lie"] = value348;
 		}
 	}
 	{
-		var value347 = ["You don't see anything because the programmer forgot to give this thing a description. Sorry."];
+		var value349 = ["You don't see anything because the programmer forgot to give this thing a description. Sorry."];
 		if(__map_reserved["no_look"] != null) {
-			_g.setReserved("no_look",value347);
+			_g.setReserved("no_look",value349);
 		} else {
-			_g.h["no_look"] = value347;
+			_g.h["no_look"] = value349;
 		}
 	}
 	{
-		var value348 = ["It misses.","It failed.","You're out of poke points.","You try to poke it, but it resists.","It's defense is too high for your poke.","You poke, but miss so badly that you just hit your own nose instead."];
+		var value350 = ["It misses.","It failed.","You're out of poke points.","You try to poke it, but it resists.","It's defense is too high for your poke.","You poke, but miss so badly that you just hit your own nose instead."];
 		if(__map_reserved["no_poke"] != null) {
-			_g.setReserved("no_poke",value348);
+			_g.setReserved("no_poke",value350);
 		} else {
-			_g.h["no_poke"] = value348;
+			_g.h["no_poke"] = value350;
 		}
 	}
 	{
-		var value349 = ["And what would you do if you reached it?"];
+		var value351 = ["And what would you do if you reached it?"];
 		if(__map_reserved["no_reach"] != null) {
-			_g.setReserved("no_reach",value349);
+			_g.setReserved("no_reach",value351);
 		} else {
-			_g.h["no_reach"] = value349;
-		}
-	}
-	{
-		var value350 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
-		if(__map_reserved["no_rest"] != null) {
-			_g.setReserved("no_rest",value350);
-		} else {
-			_g.h["no_rest"] = value350;
-		}
-	}
-	{
-		var value351 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
-		if(__map_reserved["no_sit"] != null) {
-			_g.setReserved("no_sit",value351);
-		} else {
-			_g.h["no_sit"] = value351;
+			_g.h["no_reach"] = value351;
 		}
 	}
 	{
 		var value352 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		if(__map_reserved["no_rest"] != null) {
+			_g.setReserved("no_rest",value352);
+		} else {
+			_g.h["no_rest"] = value352;
+		}
+	}
+	{
+		var value353 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
+		if(__map_reserved["no_sit"] != null) {
+			_g.setReserved("no_sit",value353);
+		} else {
+			_g.h["no_sit"] = value353;
+		}
+	}
+	{
+		var value354 = ["Not right now.","Quit being so lazy.","You can do that later.","You're not tired enough.","You do that enough all day already."];
 		if(__map_reserved["no_sleep"] != null) {
-			_g.setReserved("no_sleep",value352);
+			_g.setReserved("no_sleep",value354);
 		} else {
-			_g.h["no_sleep"] = value352;
+			_g.h["no_sleep"] = value354;
 		}
 	}
 	{
-		var value353 = ["There's no smell to speak of.","It's got a very generic smell.","It smells of absolutely nothing."];
+		var value355 = ["There's no smell to speak of.","It's got a very generic smell.","It smells of absolutely nothing."];
 		if(__map_reserved["no_smell"] != null) {
-			_g.setReserved("no_smell",value353);
+			_g.setReserved("no_smell",value355);
 		} else {
-			_g.h["no_smell"] = value353;
+			_g.h["no_smell"] = value355;
 		}
 	}
 	{
-		var value354 = ["Don't put your feet all over that.","It doesn't look like it could support your weight."];
+		var value356 = ["Don't put your feet all over that.","It doesn't look like it could support your weight."];
 		if(__map_reserved["no_stand"] != null) {
-			_g.setReserved("no_stand",value354);
+			_g.setReserved("no_stand",value356);
 		} else {
-			_g.h["no_stand"] = value354;
+			_g.h["no_stand"] = value356;
 		}
 	}
 	{
-		var value355 = ["You don't really want it.","You can't take that with you.","You'd rather not carry that around with you."];
+		var value357 = ["You don't really want it.","You can't take that with you.","You'd rather not carry that around with you."];
 		if(__map_reserved["no_take"] != null) {
-			_g.setReserved("no_take",value355);
+			_g.setReserved("no_take",value357);
 		} else {
-			_g.h["no_take"] = value355;
+			_g.h["no_take"] = value357;
 		}
 	}
 	{
-		var value356 = ["You get no response.","It's not very talkative."];
+		var value358 = ["You get no response.","It's not very talkative."];
 		if(__map_reserved["no_talk"] != null) {
-			_g.setReserved("no_talk",value356);
+			_g.setReserved("no_talk",value358);
 		} else {
-			_g.h["no_talk"] = value356;
+			_g.h["no_talk"] = value358;
 		}
 	}
 	{
-		var value357 = ["It's untouchable.","Just touching it won't get you anywhere.","You think about rubbing your hands all over it, but then realize that that's both weird and useless."];
+		var value359 = ["It's untouchable.","Just touching it won't get you anywhere.","You think about rubbing your hands all over it, but then realize that that's both weird and useless."];
 		if(__map_reserved["no_touch"] != null) {
-			_g.setReserved("no_touch",value357);
+			_g.setReserved("no_touch",value359);
 		} else {
-			_g.h["no_touch"] = value357;
+			_g.h["no_touch"] = value359;
 		}
 	}
 	{
-		var value358 = ["It's utterly useless.","You have no use for it.","That's just not useful."];
+		var value360 = ["It's utterly useless.","You have no use for it.","That's just not useful."];
 		if(__map_reserved["no_use"] != null) {
-			_g.setReserved("no_use",value358);
+			_g.setReserved("no_use",value360);
 		} else {
-			_g.h["no_use"] = value358;
+			_g.h["no_use"] = value360;
 		}
 	}
 	{
-		var value359 = ["Mmh, fruit punch!"];
+		var value361 = ["Mmh, fruit punch!"];
 		if(__map_reserved["smell/chewingGum"] != null) {
-			_g.setReserved("smell/chewingGum",value359);
+			_g.setReserved("smell/chewingGum",value361);
 		} else {
-			_g.h["smell/chewingGum"] = value359;
+			_g.h["smell/chewingGum"] = value361;
 		}
 	}
 	{
-		var value360 = ["It smells of smoke and a little bit too much aftershave."];
+		var value362 = ["It smells of smoke and a little bit too much aftershave."];
 		if(__map_reserved["smell/dragon"] != null) {
-			_g.setReserved("smell/dragon",value360);
+			_g.setReserved("smell/dragon",value362);
 		} else {
-			_g.h["smell/dragon"] = value360;
+			_g.h["smell/dragon"] = value362;
 		}
 	}
 	{
-		var value361 = ["It smells like herbs and smoke."];
+		var value363 = ["It smells like herbs and smoke."];
 		if(__map_reserved["smell/flute"] != null) {
-			_g.setReserved("smell/flute",value361);
+			_g.setReserved("smell/flute",value363);
 		} else {
-			_g.h["smell/flute"] = value361;
+			_g.h["smell/flute"] = value363;
 		}
 	}
 	{
-		var value362 = ["It smells like herbs and smoke."];
+		var value364 = ["It smells like herbs and smoke."];
 		if(__map_reserved["smell/greenFlute"] != null) {
-			_g.setReserved("smell/greenFlute",value362);
+			_g.setReserved("smell/greenFlute",value364);
 		} else {
-			_g.h["smell/greenFlute"] = value362;
+			_g.h["smell/greenFlute"] = value364;
 		}
 	}
 	{
-		var value363 = ["Mmh, fruit punch!"];
+		var value365 = ["Mmh, fruit punch!"];
 		if(__map_reserved["smell/hardGum"] != null) {
-			_g.setReserved("smell/hardGum",value363);
+			_g.setReserved("smell/hardGum",value365);
 		} else {
-			_g.h["smell/hardGum"] = value363;
+			_g.h["smell/hardGum"] = value365;
 		}
 	}
 	{
-		var value364 = ["It's a sealed plastic bag, so you don't SMELL anything."];
+		var value366 = ["It's a sealed plastic bag, so you don't SMELL anything."];
 		if(__map_reserved["smell/jerky"] != null) {
-			_g.setReserved("smell/jerky",value364);
+			_g.setReserved("smell/jerky",value366);
 		} else {
-			_g.h["smell/jerky"] = value364;
+			_g.h["smell/jerky"] = value366;
 		}
 	}
 	{
-		var value365 = ["It smells like herbs and smoke."];
+		var value367 = ["It smells like herbs and smoke."];
 		if(__map_reserved["smell/litGreenFlute"] != null) {
-			_g.setReserved("smell/litGreenFlute",value365);
+			_g.setReserved("smell/litGreenFlute",value367);
 		} else {
-			_g.h["smell/litGreenFlute"] = value365;
+			_g.h["smell/litGreenFlute"] = value367;
 		}
 	}
 	{
-		var value366 = ["It smells like herbs and smoke."];
+		var value368 = ["It smells like herbs and smoke."];
 		if(__map_reserved["smell/litYellowFlute"] != null) {
-			_g.setReserved("smell/litYellowFlute",value366);
+			_g.setReserved("smell/litYellowFlute",value368);
 		} else {
-			_g.h["smell/litYellowFlute"] = value366;
+			_g.h["smell/litYellowFlute"] = value368;
 		}
 	}
 	{
-		var value367 = ["Notes of rust and drywall."];
+		var value369 = ["Notes of rust and drywall."];
 		if(__map_reserved["smell/nail"] != null) {
-			_g.setReserved("smell/nail",value367);
+			_g.setReserved("smell/nail",value369);
 		} else {
-			_g.h["smell/nail"] = value367;
+			_g.h["smell/nail"] = value369;
 		}
 	}
 	{
-		var value368 = ["I smell omnicient."];
+		var value370 = ["I smell omnicient."];
 		if(__map_reserved["smell/narrator"] != null) {
-			_g.setReserved("smell/narrator",value368);
+			_g.setReserved("smell/narrator",value370);
 		} else {
-			_g.h["smell/narrator"] = value368;
+			_g.h["smell/narrator"] = value370;
 		}
 	}
 	{
-		var value369 = ["It smells unpleasantly like dry paint and smoke. Probably because it's meant to be LOOKed at, not smelled."];
+		var value371 = ["It smells unpleasantly like dry paint and smoke. Probably because it's meant to be LOOKed at, not smelled."];
 		if(__map_reserved["smell/painting"] != null) {
-			_g.setReserved("smell/painting",value369);
+			_g.setReserved("smell/painting",value371);
 		} else {
-			_g.h["smell/painting"] = value369;
+			_g.h["smell/painting"] = value371;
 		}
 	}
 	{
-		var value370 = ["It smells great actually, the fruit punch melds really well with the notes of rust and drywall."];
+		var value372 = ["It smells great actually, the fruit punch melds really well with the notes of rust and drywall."];
 		if(__map_reserved["smell/plug"] != null) {
-			_g.setReserved("smell/plug",value370);
+			_g.setReserved("smell/plug",value372);
 		} else {
-			_g.h["smell/plug"] = value370;
+			_g.h["smell/plug"] = value372;
 		}
 	}
 	{
-		var value371 = ["You smell like yourself. I won't elaborate on that."];
+		var value373 = ["You smell like yourself. I won't elaborate on that."];
 		if(__map_reserved["smell/self"] != null) {
-			_g.setReserved("smell/self",value371);
+			_g.setReserved("smell/self",value373);
 		} else {
-			_g.h["smell/self"] = value371;
+			_g.h["smell/self"] = value373;
 		}
 	}
 	{
-		var value372 = ["Mmh, a hint of processed meat, smoke flavoring and salt."];
+		var value374 = ["Mmh, a hint of processed meat, smoke flavoring and salt."];
 		if(__map_reserved["smell/silicaGelPacket"] != null) {
-			_g.setReserved("smell/silicaGelPacket",value372);
+			_g.setReserved("smell/silicaGelPacket",value374);
 		} else {
-			_g.h["smell/silicaGelPacket"] = value372;
+			_g.h["smell/silicaGelPacket"] = value374;
 		}
 	}
 	{
-		var value373 = ["You can taste it, it's fruit punch flavor. It probably smells of that too."];
+		var value375 = ["You can taste it, it's fruit punch flavor. It probably smells of that too."];
 		if(__map_reserved["smell/softGum"] != null) {
-			_g.setReserved("smell/softGum",value373);
+			_g.setReserved("smell/softGum",value375);
 		} else {
-			_g.h["smell/softGum"] = value373;
+			_g.h["smell/softGum"] = value375;
 		}
 	}
 	{
-		var value374 = ["It smells like an electrical fire."];
+		var value376 = ["It smells like an electrical fire."];
 		if(__map_reserved["smell/sparks"] != null) {
-			_g.setReserved("smell/sparks",value374);
+			_g.setReserved("smell/sparks",value376);
 		} else {
-			_g.h["smell/sparks"] = value374;
+			_g.h["smell/sparks"] = value376;
 		}
 	}
 	{
-		var value375 = ["Ew, it smells like a decade's worth of drinks spilled in unison and never cleaned up."];
+		var value377 = ["Ew, it smells like a decade's worth of drinks spilled in unison and never cleaned up."];
 		if(__map_reserved["smell/table"] != null) {
-			_g.setReserved("smell/table",value375);
+			_g.setReserved("smell/table",value377);
 		} else {
-			_g.h["smell/table"] = value375;
+			_g.h["smell/table"] = value377;
 		}
 	}
 	{
-		var value376 = ["It smells very, very clean. Like someone used a massively corrosive substance to ensure no living thing would get near this TOILET. In fact, you're getting quite the headache from smelling it, so you decide to stop doing that.","To avoid permanent brain damage, you'd rather not SMELL that stuff again. Those chemicals really pack a punch."];
+		var value378 = ["It smells very, very clean. Like someone used a massively corrosive substance to ensure no living thing would get near this TOILET. In fact, you're getting quite the headache from smelling it, so you decide to stop doing that.","To avoid permanent brain damage, you'd rather not SMELL that stuff again. Those chemicals really pack a punch."];
 		if(__map_reserved["smell/toilet"] != null) {
-			_g.setReserved("smell/toilet",value376);
+			_g.setReserved("smell/toilet",value378);
 		} else {
-			_g.h["smell/toilet"] = value376;
+			_g.h["smell/toilet"] = value378;
 		}
 	}
 	{
-		var value377 = ["Ew, smells like this TRASH is soaked in gasoline."];
+		var value379 = ["Ew, smells like this TRASH is soaked in gasoline."];
 		if(__map_reserved["smell/trash"] != null) {
-			_g.setReserved("smell/trash",value377);
+			_g.setReserved("smell/trash",value379);
 		} else {
-			_g.h["smell/trash"] = value377;
+			_g.h["smell/trash"] = value379;
 		}
 	}
 	{
-		var value378 = ["It smells like gasoline. Which is kinda odd for a restroom trashcan, but why are you smelling it anyway."];
+		var value380 = ["It smells like gasoline. Which is kinda odd for a restroom trashcan, but why are you smelling it anyway."];
 		if(__map_reserved["smell/trashcan"] != null) {
-			_g.setReserved("smell/trashcan",value378);
+			_g.setReserved("smell/trashcan",value380);
 		} else {
-			_g.h["smell/trashcan"] = value378;
+			_g.h["smell/trashcan"] = value380;
 		}
 	}
 	{
-		var value379 = ["It smells like herbs and smoke."];
+		var value381 = ["It smells like herbs and smoke."];
 		if(__map_reserved["smell/wetFlute"] != null) {
-			_g.setReserved("smell/wetFlute",value379);
+			_g.setReserved("smell/wetFlute",value381);
 		} else {
-			_g.h["smell/wetFlute"] = value379;
+			_g.h["smell/wetFlute"] = value381;
 		}
 	}
 	{
-		var value380 = ["It smells like herbs and smoke."];
+		var value382 = ["It smells like herbs and smoke."];
 		if(__map_reserved["smell/yellowFlute"] != null) {
-			_g.setReserved("smell/yellowFlute",value380);
+			_g.setReserved("smell/yellowFlute",value382);
 		} else {
-			_g.h["smell/yellowFlute"] = value380;
+			_g.h["smell/yellowFlute"] = value382;
 		}
 	}
 	{
-		var value381 = ["Your current gravity situation does not allow for it."];
+		var value383 = ["Your current gravity situation does not allow for it."];
 		if(__map_reserved["stand/ceiling"] != null) {
-			_g.setReserved("stand/ceiling",value381);
+			_g.setReserved("stand/ceiling",value383);
 		} else {
-			_g.h["stand/ceiling"] = value381;
+			_g.h["stand/ceiling"] = value383;
 		}
 	}
 	{
-		var value382 = ["Since you're barefoot, stepping on the FIRE is a really bad idea."];
+		var value384 = ["Since you're barefoot, stepping on the FIRE is a really bad idea."];
 		if(__map_reserved["stand/fire"] != null) {
-			_g.setReserved("stand/fire",value382);
+			_g.setReserved("stand/fire",value384);
 		} else {
-			_g.h["stand/fire"] = value382;
+			_g.h["stand/fire"] = value384;
 		}
 	}
 	{
-		var value383 = ["You're standing on it already."];
+		var value385 = ["You're standing on it already."];
 		if(__map_reserved["stand/floor"] != null) {
-			_g.setReserved("stand/floor",value383);
+			_g.setReserved("stand/floor",value385);
 		} else {
-			_g.h["stand/floor"] = value383;
+			_g.h["stand/floor"] = value385;
 		}
 	}
 	{
-		var value384 = ["You stand on your own foot. It hurts."];
+		var value386 = ["You stand on your own foot. It hurts."];
 		if(__map_reserved["stand/self"] != null) {
-			_g.setReserved("stand/self",value384);
+			_g.setReserved("stand/self",value386);
 		} else {
-			_g.h["stand/self"] = value384;
+			_g.h["stand/self"] = value386;
 		}
 	}
 	{
-		var value385 = ["You don't want to get your feet wet, you'll catch a cold."];
+		var value387 = ["You don't want to get your feet wet, you'll catch a cold."];
 		if(__map_reserved["stand/toilet"] != null) {
-			_g.setReserved("stand/toilet",value385);
+			_g.setReserved("stand/toilet",value387);
 		} else {
-			_g.h["stand/toilet"] = value385;
+			_g.h["stand/toilet"] = value387;
 		}
 	}
 	{
-		var value386 = ["The WALL's verticality prevents you from doing that."];
+		var value388 = ["The WALL's verticality prevents you from doing that."];
 		if(__map_reserved["stand/wall"] != null) {
-			_g.setReserved("stand/wall",value386);
+			_g.setReserved("stand/wall",value388);
 		} else {
-			_g.h["stand/wall"] = value386;
+			_g.h["stand/wall"] = value388;
 		}
 	}
 	{
-		var value387 = ["You pull the BLADE out of the table. It's so dull that you don't have to worry about it damaging anything else in your INVENTORY."];
+		var value389 = ["You pull the BLADE out of the table. It's so dull that you don't have to worry about it damaging anything else in your INVENTORY."];
 		if(__map_reserved["take/_bladeInTable"] != null) {
-			_g.setReserved("take/_bladeInTable",value387);
+			_g.setReserved("take/_bladeInTable",value389);
 		} else {
-			_g.h["take/_bladeInTable"] = value387;
-		}
-	}
-	{
-		var value388 = ["No, it's good where it's at."];
-		if(__map_reserved["take/_fixedPipes"] != null) {
-			_g.setReserved("take/_fixedPipes",value388);
-		} else {
-			_g.h["take/_fixedPipes"] = value388;
-		}
-	}
-	{
-		var value389 = ["No, it's good where it's at."];
-		if(__map_reserved["take/_gumPipes"] != null) {
-			_g.setReserved("take/_gumPipes",value389);
-		} else {
-			_g.h["take/_gumPipes"] = value389;
+			_g.h["take/_bladeInTable"] = value389;
 		}
 	}
 	{
 		var value390 = ["No, it's good where it's at."];
+		if(__map_reserved["take/_fixedPipes"] != null) {
+			_g.setReserved("take/_fixedPipes",value390);
+		} else {
+			_g.h["take/_fixedPipes"] = value390;
+		}
+	}
+	{
+		var value391 = ["No, it's good where it's at."];
+		if(__map_reserved["take/_gumPipes"] != null) {
+			_g.setReserved("take/_gumPipes",value391);
+		} else {
+			_g.h["take/_gumPipes"] = value391;
+		}
+	}
+	{
+		var value392 = ["No, it's good where it's at."];
 		if(__map_reserved["take/_holePipes"] != null) {
-			_g.setReserved("take/_holePipes",value390);
+			_g.setReserved("take/_holePipes",value392);
 		} else {
-			_g.h["take/_holePipes"] = value390;
+			_g.h["take/_holePipes"] = value392;
 		}
 	}
 	{
-		var value391 = ["You need to pay the VENDING MACHINE to get the BEEF JERKY."];
+		var value393 = ["You need to pay the VENDING MACHINE to get the BEEF JERKY."];
 		if(__map_reserved["take/_jerkyInMachine"] != null) {
-			_g.setReserved("take/_jerkyInMachine",value391);
+			_g.setReserved("take/_jerkyInMachine",value393);
 		} else {
-			_g.h["take/_jerkyInMachine"] = value391;
+			_g.h["take/_jerkyInMachine"] = value393;
 		}
 	}
 	{
-		var value392 = ["You pull the NAIL out of the wall with relative ease. The PAINTING falls to the ground with a thump."];
+		var value394 = ["You pull the NAIL out of the wall with relative ease. The PAINTING falls to the ground with a thump."];
 		if(__map_reserved["take/_nailInWall"] != null) {
-			_g.setReserved("take/_nailInWall",value392);
+			_g.setReserved("take/_nailInWall",value394);
 		} else {
-			_g.h["take/_nailInWall"] = value392;
+			_g.h["take/_nailInWall"] = value394;
 		}
 	}
 	{
-		var value393 = ["No, it's good where it's at."];
+		var value395 = ["No, it's good where it's at."];
 		if(__map_reserved["take/_nailPipes"] != null) {
-			_g.setReserved("take/_nailPipes",value393);
+			_g.setReserved("take/_nailPipes",value395);
 		} else {
-			_g.h["take/_nailPipes"] = value393;
+			_g.h["take/_nailPipes"] = value395;
 		}
 	}
 	{
-		var value394 = ["With your new-found strength, you stem yourself against the ALTAR. Inch by inch, you manage to push it back far enough to reveal a SECRET PASSAGE! You let out a scream of victory, hoping that you can convince yourself that this was worth all the pain and suffering.","You put enough effort into moving it once already."];
+		var value396 = ["With your new-found strength, you stem yourself against the ALTAR. Inch by inch, you manage to push it back far enough to reveal a SECRET PASSAGE! You let out a scream of victory, hoping that you can convince yourself that this was worth all the pain and suffering.","You put enough effort into moving it once already."];
 		if(__map_reserved["take/altar"] != null) {
-			_g.setReserved("take/altar",value394);
+			_g.setReserved("take/altar",value396);
 		} else {
-			_g.h["take/altar"] = value394;
+			_g.h["take/altar"] = value396;
 		}
 	}
 	{
-		var value395 = ["You wield the BLADE (1d4 nonlethal bludgeoning damage).","It's already equipped."];
+		var value397 = ["You wield the BLADE (1d4 nonlethal bludgeoning damage).","It's already equipped."];
 		if(__map_reserved["take/blade"] != null) {
-			_g.setReserved("take/blade",value395);
+			_g.setReserved("take/blade",value397);
 		} else {
-			_g.h["take/blade"] = value395;
+			_g.h["take/blade"] = value397;
 		}
 	}
 	{
-		var value396 = ["Nah, you'd probably use it once or twice and then it would sit in the corner gathering dust. Just like your other workout equipment."];
+		var value398 = ["Nah, you'd probably use it once or twice and then it would sit in the corner gathering dust. Just like your other workout equipment."];
 		if(__map_reserved["take/bowflex"] != null) {
-			_g.setReserved("take/bowflex",value396);
+			_g.setReserved("take/bowflex",value398);
 		} else {
-			_g.h["take/bowflex"] = value396;
+			_g.h["take/bowflex"] = value398;
 		}
 	}
 	{
-		var value397 = ["You don't want these GLASSES, they're way uncool and also broken."];
+		var value399 = ["You don't want these GLASSES, they're way uncool and also broken."];
 		if(__map_reserved["take/brokenGlasses"] != null) {
-			_g.setReserved("take/brokenGlasses",value397);
+			_g.setReserved("take/brokenGlasses",value399);
 		} else {
-			_g.h["take/brokenGlasses"] = value397;
+			_g.h["take/brokenGlasses"] = value399;
 		}
 	}
 	{
-		var value398 = ["You desparately scratch at the CHEWING GUM with your fingernails, but it's too firmly stuck to the surface to pull it of that way.","You still can't pull it off with your bare hands."];
+		var value400 = ["You desparately scratch at the CHEWING GUM with your fingernails, but it's too firmly stuck to the surface to pull it of that way.","You still can't pull it off with your bare hands."];
 		if(__map_reserved["take/chewingGum"] != null) {
-			_g.setReserved("take/chewingGum",value398);
+			_g.setReserved("take/chewingGum",value400);
 		} else {
-			_g.h["take/chewingGum"] = value398;
+			_g.h["take/chewingGum"] = value400;
 		}
 	}
 	{
-		var value399 = ["It's firmly affixed to its podium, and even the bulb is glued in place."];
+		var value401 = ["It's firmly affixed to its podium, and even the bulb is glued in place."];
 		if(__map_reserved["take/clapper"] != null) {
-			_g.setReserved("take/clapper",value399);
+			_g.setReserved("take/clapper",value401);
 		} else {
-			_g.h["take/clapper"] = value399;
+			_g.h["take/clapper"] = value401;
 		}
 	}
 	{
-		var value400 = ["Alright then. You take off your SHIRT and PANTS. Exposed to the raw elements, your underwear immediately disintegrates into a fine mist, leaving you naked."];
+		var value402 = ["Alright then. You take off your SHIRT and PANTS. Exposed to the raw elements, your underwear immediately disintegrates into a fine mist, leaving you naked."];
 		if(__map_reserved["take/clothes"] != null) {
-			_g.setReserved("take/clothes",value400);
+			_g.setReserved("take/clothes",value402);
 		} else {
-			_g.h["take/clothes"] = value400;
+			_g.h["take/clothes"] = value402;
 		}
 	}
 	{
-		var value401 = ["You try to fight the DRAGON once more."];
+		var value403 = ["You try to fight the DRAGON once more."];
 		if(__map_reserved["take/dragon"] != null) {
-			_g.setReserved("take/dragon",value401);
+			_g.setReserved("take/dragon",value403);
 		} else {
-			_g.h["take/dragon"] = value401;
+			_g.h["take/dragon"] = value403;
 		}
 	}
 	{
-		var value402 = ["It's way too big for you. Besides, you'd probably just ruin it like you did your own clothes."];
+		var value404 = ["It's way too big for you. Besides, you'd probably just ruin it like you did your own clothes."];
 		if(__map_reserved["take/dressShirt"] != null) {
-			_g.setReserved("take/dressShirt",value402);
+			_g.setReserved("take/dressShirt",value404);
 		} else {
-			_g.h["take/dressShirt"] = value402;
+			_g.h["take/dressShirt"] = value404;
 		}
 	}
 	{
-		var value403 = ["You reach into the FIRE and burn your fingers. They hurt now and you feel a little sad.","You remember what happened last time you tried to put your hands into the FIRE. The feeling of a little sadness washes over you and you decide not to do it again."];
+		var value405 = ["You reach into the FIRE and burn your fingers. They hurt now and you feel a little sad.","You remember what happened last time you tried to put your hands into the FIRE. The feeling of a little sadness washes over you and you decide not to do it again."];
 		if(__map_reserved["take/fire"] != null) {
-			_g.setReserved("take/fire",value403);
+			_g.setReserved("take/fire",value405);
 		} else {
-			_g.h["take/fire"] = value403;
+			_g.h["take/fire"] = value405;
 		}
 	}
 	{
-		var value404 = ["You grab the FLUTE the STATUE is holding and yank it out. It's surprisingly easy, as if it's meant to be detachable.",".got"];
+		var value406 = ["You grab the FLUTE the STATUE is holding and yank it out. It's surprisingly easy, as if it's meant to be detachable.",".got"];
 		if(__map_reserved["take/flute"] != null) {
-			_g.setReserved("take/flute",value404);
+			_g.setReserved("take/flute",value406);
 		} else {
-			_g.h["take/flute"] = value404;
+			_g.h["take/flute"] = value406;
 		}
 	}
 	{
-		var value405 = ["You decide to take the WEEDS back out of the FLUTE."];
+		var value407 = ["No, this looks very right to you. The WEEDS stay in the FLUTE."];
 		if(__map_reserved["take/greenFlute"] != null) {
-			_g.setReserved("take/greenFlute",value405);
+			_g.setReserved("take/greenFlute",value407);
 		} else {
-			_g.h["take/greenFlute"] = value405;
+			_g.h["take/greenFlute"] = value407;
 		}
 	}
 	{
-		var value406 = ["You can't just TAKE WEEDS like that."];
+		var value408 = ["You can't just TAKE WEEDS like that."];
 		if(__map_reserved["take/greenWeeds"] != null) {
-			_g.setReserved("take/greenWeeds",value406);
+			_g.setReserved("take/greenWeeds",value408);
 		} else {
-			_g.h["take/greenWeeds"] = value406;
+			_g.h["take/greenWeeds"] = value408;
 		}
 	}
 	{
-		var value407 = ["You wield your BARE HANDS (1 nonlethal poking damage, -2 confidence bonus to all attack and damage rolls)."];
+		var value409 = ["You wield your BARE HANDS (1 nonlethal poking damage, -2 confidence bonus to all attack and damage rolls)."];
 		if(__map_reserved["take/hands"] != null) {
-			_g.setReserved("take/hands",value407);
+			_g.setReserved("take/hands",value409);
 		} else {
-			_g.h["take/hands"] = value407;
+			_g.h["take/hands"] = value409;
 		}
 	}
 	{
-		var value408 = ["You decide to take the WEEDS back out of the FLUTE."];
+		var value410 = ["No, this looks very right to you. The WEEDS stay in the FLUTE."];
 		if(__map_reserved["take/litGreenFlute"] != null) {
-			_g.setReserved("take/litGreenFlute",value408);
+			_g.setReserved("take/litGreenFlute",value410);
 		} else {
-			_g.h["take/litGreenFlute"] = value408;
+			_g.h["take/litGreenFlute"] = value410;
 		}
 	}
 	{
-		var value409 = ["You decide to take the WEEDS back out of the FLUTE."];
+		var value411 = ["You decide to take the WEEDS back out of the FLUTE."];
 		if(__map_reserved["take/litYellowFlute"] != null) {
-			_g.setReserved("take/litYellowFlute",value409);
+			_g.setReserved("take/litYellowFlute",value411);
 		} else {
-			_g.h["take/litYellowFlute"] = value409;
+			_g.h["take/litYellowFlute"] = value411;
 		}
 	}
 	{
-		var value410 = [".got"];
+		var value412 = [".got"];
 		if(__map_reserved["take/nail"] != null) {
-			_g.setReserved("take/nail",value410);
+			_g.setReserved("take/nail",value412);
 		} else {
-			_g.h["take/nail"] = value410;
+			_g.h["take/nail"] = value412;
 		}
 	}
 	{
-		var value411 = ["You can't reach me."];
+		var value413 = ["You can't reach me."];
 		if(__map_reserved["take/narrator"] != null) {
-			_g.setReserved("take/narrator",value411);
+			_g.setReserved("take/narrator",value413);
 		} else {
-			_g.h["take/narrator"] = value411;
+			_g.h["take/narrator"] = value413;
 		}
 	}
 	{
-		var value412 = ["This thing is way too heavy to drag around with you."];
+		var value414 = ["This thing is way too heavy to drag around with you."];
 		if(__map_reserved["take/painting"] != null) {
-			_g.setReserved("take/painting",value412);
+			_g.setReserved("take/painting",value414);
 		} else {
-			_g.h["take/painting"] = value412;
+			_g.h["take/painting"] = value414;
 		}
 	}
 	{
-		var value413 = ["You won't achieve anything by taking off your pants just to put them back on later. Just look where it got you in real life."];
+		var value415 = ["You won't achieve anything by taking off your pants just to put them back on later. Just look where it got you in real life."];
 		if(__map_reserved["take/pants"] != null) {
-			_g.setReserved("take/pants",value413);
+			_g.setReserved("take/pants",value415);
 		} else {
-			_g.h["take/pants"] = value413;
+			_g.h["take/pants"] = value415;
 		}
 	}
 	{
-		var value414 = ["After what you went through, you'll take this KEY to the end of the world! Or at least until you USE it on something and it disappears from your INVENTORY."];
+		var value416 = ["After what you went through, you'll take this KEY to the end of the world! Or at least until you USE it on something and it disappears from your INVENTORY."];
 		if(__map_reserved["take/restroomkey"] != null) {
-			_g.setReserved("take/restroomkey",value414);
+			_g.setReserved("take/restroomkey",value416);
 		} else {
-			_g.h["take/restroomkey"] = value414;
+			_g.h["take/restroomkey"] = value416;
 		}
 	}
 	{
-		var value415 = ["No one can take you away from me."];
+		var value417 = ["No one can take you away from me."];
 		if(__map_reserved["take/self"] != null) {
-			_g.setReserved("take/self",value415);
+			_g.setReserved("take/self",value417);
 		} else {
-			_g.h["take/self"] = value415;
+			_g.h["take/self"] = value417;
 		}
 	}
 	{
-		var value416 = ["You reach into the TRASHCAN and grab the SHINY THING at the bottom - it feels smooth and metal, just like a SHINY THING should. However, as you pull it up, a spark releases from the cigarette butts around it. It ignites the TRASH and the whole TRASHCAN bursts into flames!\n\nYou're fine, but needless to say, you didn't get the SHINY THING. You only started a FIRE."];
+		var value418 = ["You reach into the TRASHCAN and grab the SHINY THING at the bottom - it feels smooth and metal, just like a SHINY THING should. However, as you pull it up, a spark releases from the cigarette butts around it. It ignites the TRASH and the whole TRASHCAN bursts into flames!\n\nYou're fine, but needless to say, you didn't get the SHINY THING. You only started a FIRE."];
 		if(__map_reserved["take/shiny"] != null) {
-			_g.setReserved("take/shiny",value416);
+			_g.setReserved("take/shiny",value418);
 		} else {
-			_g.h["take/shiny"] = value416;
+			_g.h["take/shiny"] = value418;
 		}
 	}
 	{
-		var value417 = ["You already took it off. And you're not gonna get to put it back on, you stay naked and think about the consequences of your actions."];
+		var value419 = ["You already took it off. And you're not gonna get to put it back on, you stay naked and think about the consequences of your actions."];
 		if(__map_reserved["take/shirt"] != null) {
-			_g.setReserved("take/shirt",value417);
+			_g.setReserved("take/shirt",value419);
 		} else {
-			_g.h["take/shirt"] = value417;
+			_g.h["take/shirt"] = value419;
 		}
 	}
 	{
-		var value418 = ["It's glued to the table. But actually, you don't want to chop small amounts of food via domestic violence anyway."];
+		var value420 = ["It's glued to the table. But actually, you don't want to chop small amounts of food via domestic violence anyway."];
 		if(__map_reserved["take/slapChop"] != null) {
-			_g.setReserved("take/slapChop",value418);
+			_g.setReserved("take/slapChop",value420);
 		} else {
-			_g.h["take/slapChop"] = value418;
+			_g.h["take/slapChop"] = value420;
 		}
 	}
 	{
-		var value419 = ["You rummage around in the SOOT, looking for that elusive SHINY THING you saw before. Eventually, your fingers grasp the metal thing and you triumphantly pull it towards you: It's a small metal KEY!","You already found the KEY, no need to get your hands any dirtier than they are."];
+		var value421 = ["You rummage around in the SOOT, looking for that elusive SHINY THING you saw before. Eventually, your fingers grasp the metal thing and you triumphantly pull it towards you: It's a small metal KEY!","You already found the KEY, no need to get your hands any dirtier than they are."];
 		if(__map_reserved["take/soot"] != null) {
-			_g.setReserved("take/soot",value419);
+			_g.setReserved("take/soot",value421);
 		} else {
-			_g.h["take/soot"] = value419;
+			_g.h["take/soot"] = value421;
 		}
 	}
 	{
-		var value420 = ["If this STATUE were alive, you might TAKE it with you. But until you learn that animate object spell, that's not gonna happen."];
+		var value422 = ["If this STATUE were alive, you might TAKE it with you. But until you learn that animate object spell, that's not gonna happen."];
 		if(__map_reserved["take/statue"] != null) {
-			_g.setReserved("take/statue",value420);
+			_g.setReserved("take/statue",value422);
 		} else {
-			_g.h["take/statue"] = value420;
+			_g.h["take/statue"] = value422;
 		}
 	}
 	{
-		var value421 = ["This TABLE isn't hip enough to be part of your collection of furniture."];
+		var value423 = ["This TABLE isn't hip enough to be part of your collection of furniture."];
 		if(__map_reserved["take/table"] != null) {
-			_g.setReserved("take/table",value421);
+			_g.setReserved("take/table",value423);
 		} else {
-			_g.h["take/table"] = value421;
+			_g.h["take/table"] = value423;
 		}
 	}
 	{
-		var value422 = ["It's firmly anchored to the wall. You rationalize your failure by arguing that you would look pretty silly carrying a TOILET around with you."];
+		var value424 = ["It's firmly anchored to the wall. You rationalize your failure by arguing that you would look pretty silly carrying a TOILET around with you."];
 		if(__map_reserved["take/toilet"] != null) {
-			_g.setReserved("take/toilet",value422);
+			_g.setReserved("take/toilet",value424);
 		} else {
-			_g.h["take/toilet"] = value422;
+			_g.h["take/toilet"] = value424;
 		}
 	}
 	{
-		var value423 = ["While this is an adventure game, you don't need to carry literal TRASH around with you."];
+		var value425 = ["While this is an adventure game, you don't need to carry literal TRASH around with you."];
 		if(__map_reserved["take/trash"] != null) {
-			_g.setReserved("take/trash",value423);
+			_g.setReserved("take/trash",value425);
 		} else {
-			_g.h["take/trash"] = value423;
+			_g.h["take/trash"] = value425;
 		}
 	}
 	{
-		var value424 = ["Your INVENTORY is perfectly functional. You don't need this TRASHCAN to help you carry around your stuff."];
+		var value426 = ["Your INVENTORY is perfectly functional. You don't need this TRASHCAN to help you carry around your stuff."];
 		if(__map_reserved["take/trashcan"] != null) {
-			_g.setReserved("take/trashcan",value424);
+			_g.setReserved("take/trashcan",value426);
 		} else {
-			_g.h["take/trashcan"] = value424;
-		}
-	}
-	{
-		var value425 = ["You decide to take the WEEDS back out of the FLUTE."];
-		if(__map_reserved["take/wetFlute"] != null) {
-			_g.setReserved("take/wetFlute",value425);
-		} else {
-			_g.h["take/wetFlute"] = value425;
-		}
-	}
-	{
-		var value426 = ["You can't just TAKE WEEDS like that."];
-		if(__map_reserved["take/wetWeeds"] != null) {
-			_g.setReserved("take/wetWeeds",value426);
-		} else {
-			_g.h["take/wetWeeds"] = value426;
+			_g.h["take/trashcan"] = value426;
 		}
 	}
 	{
 		var value427 = ["You decide to take the WEEDS back out of the FLUTE."];
+		if(__map_reserved["take/wetFlute"] != null) {
+			_g.setReserved("take/wetFlute",value427);
+		} else {
+			_g.h["take/wetFlute"] = value427;
+		}
+	}
+	{
+		var value428 = ["You can't just TAKE WEEDS like that."];
+		if(__map_reserved["take/wetWeeds"] != null) {
+			_g.setReserved("take/wetWeeds",value428);
+		} else {
+			_g.h["take/wetWeeds"] = value428;
+		}
+	}
+	{
+		var value429 = ["You decide to take the WEEDS back out of the FLUTE."];
 		if(__map_reserved["take/yellowFlute"] != null) {
-			_g.setReserved("take/yellowFlute",value427);
+			_g.setReserved("take/yellowFlute",value429);
 		} else {
-			_g.h["take/yellowFlute"] = value427;
+			_g.h["take/yellowFlute"] = value429;
 		}
 	}
 	{
-		var value428 = ["You decide to pull out the WEEDS around the ALTAR. They're so dried up that they come out very easily.","You can't just TAKE WEEDS like that."];
+		var value430 = ["You decide to pull out the WEEDS around the ALTAR. They're so dried up that they come out very easily.","You can't just TAKE WEEDS like that."];
 		if(__map_reserved["take/yellowWeeds"] != null) {
-			_g.setReserved("take/yellowWeeds",value428);
+			_g.setReserved("take/yellowWeeds",value430);
 		} else {
-			_g.h["take/yellowWeeds"] = value428;
+			_g.h["take/yellowWeeds"] = value430;
 		}
 	}
 	{
-		var value429 = ["You talk to the DRAGON, trying to calm it down. It takes a while to get a word out of it, but eventually you find out that its name is FRED and that he is very scared of adventurers. His mom really believes in him though and even got him a really nice motivational card.","You encourage FRED about his fitness for the job. After all, even if he's really large and chubby, he does look fearsome at the first look. He blushes and thanks you for trying, but a real final boss probably wouldn't be chatting to the adventurer that's coming to vanquish them.","You try to say something to FRED, but are interrupted by his stomach rumbling. He tells you that he was waiting for you to finally come in here, but it took you so long that it's way after his usual lunch time now. He got 20 dollars from his mom though, do you want to go and eat lunch with him?","FRED is still hungry and offers to take you out to lunch again. Do you want to go with him?"];
+		var value431 = ["You talk to the DRAGON, trying to calm it down. It takes a while to get a word out of it, but eventually you find out that its name is FRED and that he is very scared of adventurers. His mom really believes in him though and even got him a really nice motivational card.","You encourage FRED about his fitness for the job. After all, even if he's really large and chubby, he does look fearsome at the first look. He blushes and thanks you for trying, but a real final boss probably wouldn't be chatting to the adventurer that's coming to vanquish them.","You try to say something to FRED, but are interrupted by his stomach rumbling. He tells you that he was waiting for you to finally come in here, but it took you so long that it's way after his usual lunch time now. He got 20 dollars from his mom though, do you want to go and eat lunch with him?","FRED is still hungry and offers to take you out to lunch again. Do you want to go with him?"];
 		if(__map_reserved["talk/dragon"] != null) {
-			_g.setReserved("talk/dragon",value429);
+			_g.setReserved("talk/dragon",value431);
 		} else {
-			_g.h["talk/dragon"] = value429;
+			_g.h["talk/dragon"] = value431;
 		}
 	}
 	{
-		var value430 = ["Don't talk back to me, just do as I say."];
+		var value432 = ["Don't talk back to me, just do as I say."];
 		if(__map_reserved["talk/narrator"] != null) {
-			_g.setReserved("talk/narrator",value430);
+			_g.setReserved("talk/narrator",value432);
 		} else {
-			_g.h["talk/narrator"] = value430;
+			_g.h["talk/narrator"] = value432;
 		}
 	}
 	{
-		var value431 = ["Don't talk back to the voice in your head. It's just the narrator."];
+		var value433 = ["Don't talk back to the voice in your head. It's just the narrator."];
 		if(__map_reserved["talk/self"] != null) {
-			_g.setReserved("talk/self",value431);
+			_g.setReserved("talk/self",value433);
 		} else {
-			_g.h["talk/self"] = value431;
+			_g.h["talk/self"] = value433;
 		}
 	}
 	{
-		var value432 = ["A hollow voice from inside the VENDING MACHINE asks \"why are you trying to talk to a vending machine\". You don't respond, as a) the question was clearly rhetorical and b) you don't really know the answer yourself.","Nah, the VENDING MACHINE will just make fun of you for talking to it again."];
+		var value434 = ["A hollow voice from inside the VENDING MACHINE asks \"why are you trying to talk to a vending machine\". You don't respond, as a) the question was clearly rhetorical and b) you don't really know the answer yourself.","Nah, the VENDING MACHINE will just make fun of you for talking to it again."];
 		if(__map_reserved["talk/vendingMachine"] != null) {
-			_g.setReserved("talk/vendingMachine",value432);
+			_g.setReserved("talk/vendingMachine",value434);
 		} else {
-			_g.h["talk/vendingMachine"] = value432;
+			_g.h["talk/vendingMachine"] = value434;
 		}
 	}
 	{
-		var value433 = ["It's not much use being stuck in the table."];
+		var value435 = ["It's not much use being stuck in the table."];
 		if(__map_reserved["use/_bladeInTable"] != null) {
-			_g.setReserved("use/_bladeInTable",value433);
+			_g.setReserved("use/_bladeInTable",value435);
 		} else {
-			_g.h["use/_bladeInTable"] = value433;
-		}
-	}
-	{
-		var value434 = ["You can't just hold it with your bare hands, the steam would scald your skin. And you're really in enough chronic pain already."];
-		if(__map_reserved["use/_fixedPipes"] != null) {
-			_g.setReserved("use/_fixedPipes",value434);
-		} else {
-			_g.h["use/_fixedPipes"] = value434;
-		}
-	}
-	{
-		var value435 = ["You can't just hold it with your bare hands, the steam would scald your skin. And you're really in enough chronic pain already."];
-		if(__map_reserved["use/_gumPipes"] != null) {
-			_g.setReserved("use/_gumPipes",value435);
-		} else {
-			_g.h["use/_gumPipes"] = value435;
+			_g.h["use/_bladeInTable"] = value435;
 		}
 	}
 	{
 		var value436 = ["You can't just hold it with your bare hands, the steam would scald your skin. And you're really in enough chronic pain already."];
-		if(__map_reserved["use/_holePipes"] != null) {
-			_g.setReserved("use/_holePipes",value436);
+		if(__map_reserved["use/_fixedPipes"] != null) {
+			_g.setReserved("use/_fixedPipes",value436);
 		} else {
-			_g.h["use/_holePipes"] = value436;
+			_g.h["use/_fixedPipes"] = value436;
 		}
 	}
 	{
 		var value437 = ["You can't just hold it with your bare hands, the steam would scald your skin. And you're really in enough chronic pain already."];
+		if(__map_reserved["use/_gumPipes"] != null) {
+			_g.setReserved("use/_gumPipes",value437);
+		} else {
+			_g.h["use/_gumPipes"] = value437;
+		}
+	}
+	{
+		var value438 = ["You can't just hold it with your bare hands, the steam would scald your skin. And you're really in enough chronic pain already."];
+		if(__map_reserved["use/_holePipes"] != null) {
+			_g.setReserved("use/_holePipes",value438);
+		} else {
+			_g.h["use/_holePipes"] = value438;
+		}
+	}
+	{
+		var value439 = ["You can't just hold it with your bare hands, the steam would scald your skin. And you're really in enough chronic pain already."];
 		if(__map_reserved["use/_nailPipes"] != null) {
-			_g.setReserved("use/_nailPipes",value437);
+			_g.setReserved("use/_nailPipes",value439);
 		} else {
-			_g.h["use/_nailPipes"] = value437;
+			_g.h["use/_nailPipes"] = value439;
 		}
 	}
 	{
-		var value438 = ["You'd rather not make sacrifices to unknown causes. Not after what happened the last time you laid naked on a stone slab."];
+		var value440 = ["You'd rather not make sacrifices to unknown causes. Not after what happened the last time you laid naked on a stone slab."];
 		if(__map_reserved["use/altar"] != null) {
-			_g.setReserved("use/altar",value438);
+			_g.setReserved("use/altar",value440);
 		} else {
-			_g.h["use/altar"] = value438;
+			_g.h["use/altar"] = value440;
 		}
 	}
 	{
-		var value439 = ["You sit yourself down in the BOWFLEX machine and start yanking the pulleys. The pulleys tug back, lock your arms in place and start to violently stretch your muscles into shape. You scream in agony.\n\nAfter 20 minutes, your workout routine and vocal chords are finished. While you will suffer immense chronic pain for the rest of your life, your arms feel significantly stronger now.","You've gotten enough muscles and anguish out of this thing."];
+		var value441 = ["You sit yourself down in the BOWFLEX machine and start yanking the pulleys. The pulleys tug back, lock your arms in place and start to violently stretch your muscles into shape. You scream in agony.\n\nAfter 20 minutes, your workout routine and vocal chords are finished. While you will suffer immense chronic pain for the rest of your life, your arms feel significantly stronger now.","You've gotten enough muscles and anguish out of this thing."];
 		if(__map_reserved["use/bowflex"] != null) {
-			_g.setReserved("use/bowflex",value439);
+			_g.setReserved("use/bowflex",value441);
 		} else {
-			_g.h["use/bowflex"] = value439;
+			_g.h["use/bowflex"] = value441;
 		}
 	}
 	{
-		var value440 = ["You can't chew it off the surface, your mouth doesn't work that way. Pick it up first."];
+		var value442 = ["You can't chew it off the surface, your mouth doesn't work that way. Pick it up first."];
 		if(__map_reserved["use/chewingGum"] != null) {
-			_g.setReserved("use/chewingGum",value440);
+			_g.setReserved("use/chewingGum",value442);
 		} else {
-			_g.h["use/chewingGum"] = value440;
+			_g.h["use/chewingGum"] = value442;
 		}
 	}
 	{
-		var value441 = ["It's featureless, there's no switch or anything."];
+		var value443 = ["It's featureless, there's no switch or anything."];
 		if(__map_reserved["use/clapper"] != null) {
-			_g.setReserved("use/clapper",value441);
+			_g.setReserved("use/clapper",value443);
 		} else {
-			_g.h["use/clapper"] = value441;
+			_g.h["use/clapper"] = value443;
 		}
 	}
 	{
-		var value442 = ["You're not that close with this DRAGON."];
+		var value444 = ["You're not that close with this DRAGON."];
 		if(__map_reserved["use/dragon"] != null) {
-			_g.setReserved("use/dragon",value442);
+			_g.setReserved("use/dragon",value444);
 		} else {
-			_g.h["use/dragon"] = value442;
+			_g.h["use/dragon"] = value444;
 		}
 	}
 	{
-		var value443 = ["How? This DOOR doesn't have a handle that you could open it with."];
+		var value445 = ["How? This DOOR doesn't have a handle that you could open it with."];
 		if(__map_reserved["use/exitDoor"] != null) {
-			_g.setReserved("use/exitDoor",value443);
+			_g.setReserved("use/exitDoor",value445);
 		} else {
-			_g.h["use/exitDoor"] = value443;
+			_g.h["use/exitDoor"] = value445;
 		}
 	}
 	{
-		var value444 = ["Well, you'd like to extinguish this FIRE, but it's not gonna happen with your bare hands."];
+		var value446 = ["Well, you'd like to extinguish this FIRE, but it's not gonna happen with your bare hands."];
 		if(__map_reserved["use/fire"] != null) {
-			_g.setReserved("use/fire",value444);
+			_g.setReserved("use/fire",value446);
 		} else {
-			_g.h["use/fire"] = value444;
+			_g.h["use/fire"] = value446;
 		}
 	}
 	{
-		var value445 = ["You blow into the FLUTE, but it doesn't make any noise. It does, however, make your mouth taste strangely herb-like."];
+		var value447 = ["You blow into the FLUTE, but it doesn't make any noise. It does, however, make your mouth taste strangely herb-like."];
 		if(__map_reserved["use/flute"] != null) {
-			_g.setReserved("use/flute",value445);
+			_g.setReserved("use/flute",value447);
 		} else {
-			_g.h["use/flute"] = value445;
+			_g.h["use/flute"] = value447;
 		}
 	}
 	{
-		var value446 = ["You suck on the FLUTE. It makes your mouth taste very herb-like, but nothing more. Probably because it's not lit."];
+		var value448 = ["You suck on the FLUTE. It makes your mouth taste very herb-like, but nothing more. Probably because it's not lit."];
 		if(__map_reserved["use/greenFlute"] != null) {
-			_g.setReserved("use/greenFlute",value446);
+			_g.setReserved("use/greenFlute",value448);
 		} else {
-			_g.h["use/greenFlute"] = value446;
+			_g.h["use/greenFlute"] = value448;
 		}
 	}
 	{
-		var value447 = ["You can't really do anything with WEEDS on their own."];
+		var value449 = ["You can't really do anything with WEEDS on their own."];
 		if(__map_reserved["use/greenWeeds"] != null) {
-			_g.setReserved("use/greenWeeds",value447);
+			_g.setReserved("use/greenWeeds",value449);
 		} else {
-			_g.h["use/greenWeeds"] = value447;
+			_g.h["use/greenWeeds"] = value449;
 		}
 	}
 	{
-		var value448 = [""];
+		var value450 = [""];
 		if(__map_reserved["use/hands"] != null) {
-			_g.setReserved("use/hands",value448);
+			_g.setReserved("use/hands",value450);
 		} else {
-			_g.h["use/hands"] = value448;
+			_g.h["use/hands"] = value450;
 		}
 	}
 	{
-		var value449 = ["You rip open the packet to get at your well-earned BEEF JERKY. But apparently the stuff inside is older than expected, as all the meat just crumbles to dust as soon as the air touches it.\n\nBut hey, at least you can chew on the SILICA GEL PACKET."];
+		var value451 = ["You rip open the packet to get at your well-earned BEEF JERKY. But apparently the stuff inside is older than expected, as all the meat just crumbles to dust as soon as the air touches it.\n\nBut hey, at least you can chew on the SILICA GEL PACKET."];
 		if(__map_reserved["use/jerky"] != null) {
-			_g.setReserved("use/jerky",value449);
+			_g.setReserved("use/jerky",value451);
 		} else {
-			_g.h["use/jerky"] = value449;
+			_g.h["use/jerky"] = value451;
 		}
 	}
 	{
-		var value450 = ["With some effort, you pull down the squeaking LEVER. A bubbling and rumbling echoes from deep within the machinery, and steam begins to hiss out from vents here and there.","You pull the LEVER again."];
+		var value452 = ["With some effort, you pull down the squeaking LEVER. A bubbling and rumbling echoes from deep within the machinery, and steam begins to hiss out from vents here and there.","You pull the LEVER again."];
 		if(__map_reserved["use/lever"] != null) {
-			_g.setReserved("use/lever",value450);
+			_g.setReserved("use/lever",value452);
 		} else {
-			_g.h["use/lever"] = value450;
+			_g.h["use/lever"] = value452;
 		}
 	}
 	{
-		var value451 = ["You smoke the WEEDS. It's a strange chemical taste, but oddly pleasant regardless. The chemicals are rapidly getting to your head and the room begins to spin around you."];
+		var value453 = ["You smoke the WEEDS. It's a strange chemical taste, but oddly pleasant regardless. The chemicals are rapidly getting to your head and the room begins to spin around you."];
 		if(__map_reserved["use/litGreenFlute"] != null) {
-			_g.setReserved("use/litGreenFlute",value451);
+			_g.setReserved("use/litGreenFlute",value453);
 		} else {
-			_g.h["use/litGreenFlute"] = value451;
+			_g.h["use/litGreenFlute"] = value453;
 		}
 	}
 	{
-		var value452 = ["You smoke the FLUTE. It tastes terrible and gives you a headache, but nothing else. Probably because these are just WEEDS, not green."];
+		var value454 = ["You smoke the FLUTE. It tastes terrible and gives you a headache, but nothing else. Probably because these are just WEEDS, not green."];
 		if(__map_reserved["use/litYellowFlute"] != null) {
-			_g.setReserved("use/litYellowFlute",value452);
+			_g.setReserved("use/litYellowFlute",value454);
 		} else {
-			_g.h["use/litYellowFlute"] = value452;
+			_g.h["use/litYellowFlute"] = value454;
 		}
 	}
 	{
-		var value453 = ["On its own, a NAIL is not much use."];
+		var value455 = ["On its own, a NAIL is not much use."];
 		if(__map_reserved["use/nail"] != null) {
-			_g.setReserved("use/nail",value453);
+			_g.setReserved("use/nail",value455);
 		} else {
-			_g.h["use/nail"] = value453;
+			_g.h["use/nail"] = value455;
 		}
 	}
 	{
-		var value454 = ["Don't try anything funny, I could narrate you out of existence!"];
+		var value456 = ["Don't try anything funny, I could narrate you out of existence!"];
 		if(__map_reserved["use/narrator"] != null) {
-			_g.setReserved("use/narrator",value454);
+			_g.setReserved("use/narrator",value456);
 		} else {
-			_g.h["use/narrator"] = value454;
+			_g.h["use/narrator"] = value456;
 		}
 	}
 	{
-		var value455 = ["You know, normal people use art by LOOKing at it."];
+		var value457 = ["You know, normal people use art by LOOKing at it."];
 		if(__map_reserved["use/painting"] != null) {
-			_g.setReserved("use/painting",value455);
+			_g.setReserved("use/painting",value457);
 		} else {
-			_g.h["use/painting"] = value455;
+			_g.h["use/painting"] = value457;
 		}
 	}
 	{
-		var value456 = ["You put your PANTS on your head. But that looks silly, so you take them back off again."];
+		var value458 = ["You put your PANTS on your head. But that looks silly, so you take them back off again."];
 		if(__map_reserved["use/pants"] != null) {
-			_g.setReserved("use/pants",value456);
+			_g.setReserved("use/pants",value458);
 		} else {
-			_g.h["use/pants"] = value456;
+			_g.h["use/pants"] = value458;
 		}
 	}
 	{
-		var value457 = ["You need to find something to PLUG if you want to use this thing."];
+		var value459 = ["You need to find something to PLUG if you want to use this thing."];
 		if(__map_reserved["use/plug"] != null) {
-			_g.setReserved("use/plug",value457);
+			_g.setReserved("use/plug",value459);
 		} else {
-			_g.h["use/plug"] = value457;
+			_g.h["use/plug"] = value459;
 		}
 	}
 	{
-		var value458 = ["You triumphantly take out the KEY, only to realize that you have to USE it WITH something else for this to make sense. Man, do you feel silly now."];
+		var value460 = ["You triumphantly take out the KEY, only to realize that you have to USE it WITH something else for this to make sense. Man, do you feel silly now."];
 		if(__map_reserved["use/restroomkey"] != null) {
-			_g.setReserved("use/restroomkey",value458);
+			_g.setReserved("use/restroomkey",value460);
 		} else {
-			_g.h["use/restroomkey"] = value458;
+			_g.h["use/restroomkey"] = value460;
 		}
 	}
 	{
-		var value459 = ["You're completely useless."];
+		var value461 = ["You're completely useless."];
 		if(__map_reserved["use/self"] != null) {
-			_g.setReserved("use/self",value459);
+			_g.setReserved("use/self",value461);
 		} else {
-			_g.h["use/self"] = value459;
+			_g.h["use/self"] = value461;
 		}
 	}
 	{
-		var value460 = ["You could sure USE a SHINY THING like that. But you have to TAKE it first to actually do something with it."];
+		var value462 = ["You could sure USE a SHINY THING like that. But you have to TAKE it first to actually do something with it."];
 		if(__map_reserved["use/shiny"] != null) {
-			_g.setReserved("use/shiny",value460);
+			_g.setReserved("use/shiny",value462);
 		} else {
-			_g.h["use/shiny"] = value460;
+			_g.h["use/shiny"] = value462;
 		}
 	}
 	{
-		var value461 = ["You attempt to put your shirt back on, but you just can't manage to get the right extremities through the appropriate holes. Better leave it off for now."];
+		var value463 = ["You attempt to put your shirt back on, but you just can't manage to get the right extremities through the appropriate holes. Better leave it off for now."];
 		if(__map_reserved["use/shirt"] != null) {
-			_g.setReserved("use/shirt",value461);
+			_g.setReserved("use/shirt",value463);
 		} else {
-			_g.h["use/shirt"] = value461;
+			_g.h["use/shirt"] = value463;
 		}
 	}
 	{
-		var value462 = ["You need something to draw the moisture out of."];
+		var value464 = ["You need something to draw the moisture out of."];
 		if(__map_reserved["use/silicaGelPacket"] != null) {
-			_g.setReserved("use/silicaGelPacket",value462);
+			_g.setReserved("use/silicaGelPacket",value464);
 		} else {
-			_g.h["use/silicaGelPacket"] = value462;
+			_g.h["use/silicaGelPacket"] = value464;
 		}
 	}
 	{
-		var value463 = ["You slap the SLAP CHOP. The flimsy plastic shatters instantly and you're left with a BLADE sticking in the table."];
+		var value465 = ["You slap the SLAP CHOP. The flimsy plastic shatters instantly and you're left with a BLADE sticking in the table."];
 		if(__map_reserved["use/slapChop"] != null) {
-			_g.setReserved("use/slapChop",value463);
+			_g.setReserved("use/slapChop",value465);
 		} else {
-			_g.h["use/slapChop"] = value463;
+			_g.h["use/slapChop"] = value465;
 		}
 	}
 	{
-		var value464 = ["None of your magic requires SOOT as a spell component. It's really quite useless."];
+		var value466 = ["None of your magic requires SOOT as a spell component. It's really quite useless."];
 		if(__map_reserved["use/soot"] != null) {
-			_g.setReserved("use/soot",value464);
+			_g.setReserved("use/soot",value466);
 		} else {
-			_g.h["use/soot"] = value464;
+			_g.h["use/soot"] = value466;
 		}
 	}
 	{
-		var value465 = ["You stick your hand in the SPARKS and burn your fingers. You put them in your mouth to ease the pain and think to yourself that you should really quit doing stuff like this.","No, you burned your fingers on these enough."];
+		var value467 = ["You stick your hand in the SPARKS and burn your fingers. You put them in your mouth to ease the pain and think to yourself that you should really quit doing stuff like this.","No, you burned your fingers on these enough."];
 		if(__map_reserved["use/sparks"] != null) {
-			_g.setReserved("use/sparks",value465);
+			_g.setReserved("use/sparks",value467);
 		} else {
-			_g.h["use/sparks"] = value465;
+			_g.h["use/sparks"] = value467;
 		}
 	}
 	{
-		var value466 = ["You have no USE for this STATUE, it would go terribly with the rest of your interior decoration."];
+		var value468 = ["You have no USE for this STATUE, it would go terribly with the rest of your interior decoration."];
 		if(__map_reserved["use/statue"] != null) {
-			_g.setReserved("use/statue",value466);
+			_g.setReserved("use/statue",value468);
 		} else {
-			_g.h["use/statue"] = value466;
+			_g.h["use/statue"] = value468;
 		}
 	}
 	{
-		var value467 = ["While you do feel a strange inner bond with this TABLE, you know in your heart that both of you are completely useless."];
+		var value469 = ["While you do feel a strange inner bond with this TABLE, you know in your heart that both of you are completely useless."];
 		if(__map_reserved["use/table"] != null) {
-			_g.setReserved("use/table",value467);
+			_g.setReserved("use/table",value469);
 		} else {
-			_g.h["use/table"] = value467;
+			_g.h["use/table"] = value469;
 		}
 	}
 	{
-		var value468 = ["You don't need it right now. And you can't go while someone is narrating your actions anyway."];
+		var value470 = ["You don't need it right now. And you can't go while someone is narrating your actions anyway."];
 		if(__map_reserved["use/toilet"] != null) {
-			_g.setReserved("use/toilet",value468);
+			_g.setReserved("use/toilet",value470);
 		} else {
-			_g.h["use/toilet"] = value468;
+			_g.h["use/toilet"] = value470;
 		}
 	}
 	{
-		var value469 = ["You don't actually want to throw away anything, since you might need it for a puzzle later. That's called game design."];
+		var value471 = ["You don't actually want to throw away anything, since you might need it for a puzzle later. That's called game design."];
 		if(__map_reserved["use/trashcan"] != null) {
-			_g.setReserved("use/trashcan",value469);
+			_g.setReserved("use/trashcan",value471);
 		} else {
-			_g.h["use/trashcan"] = value469;
+			_g.h["use/trashcan"] = value471;
 		}
 	}
 	{
-		var value470 = ["You'll surely buy something nice from this money. Clothes, for instance."];
+		var value472 = ["You'll surely buy something nice from this money. Clothes, for instance."];
 		if(__map_reserved["use/twentyDollars"] != null) {
-			_g.setReserved("use/twentyDollars",value470);
+			_g.setReserved("use/twentyDollars",value472);
 		} else {
-			_g.h["use/twentyDollars"] = value470;
+			_g.h["use/twentyDollars"] = value472;
 		}
 	}
 	{
-		var value471 = ["You shake the VENDING MACHINE, trying to get something out of it without paying. It doesn't work, you freeloader."];
+		var value473 = ["You shake the VENDING MACHINE, trying to get something out of it without paying. It doesn't work, you freeloader."];
 		if(__map_reserved["use/vendingMachine"] != null) {
-			_g.setReserved("use/vendingMachine",value471);
+			_g.setReserved("use/vendingMachine",value473);
 		} else {
-			_g.h["use/vendingMachine"] = value471;
+			_g.h["use/vendingMachine"] = value473;
 		}
 	}
 	{
-		var value472 = ["You try to suck on the FLUTE, but the wet WEEDS have clogged it up completely."];
+		var value474 = ["You try to suck on the FLUTE, but the wet WEEDS have clogged it up completely."];
 		if(__map_reserved["use/wetFlute"] != null) {
-			_g.setReserved("use/wetFlute",value472);
+			_g.setReserved("use/wetFlute",value474);
 		} else {
-			_g.h["use/wetFlute"] = value472;
+			_g.h["use/wetFlute"] = value474;
 		}
 	}
 	{
-		var value473 = ["You can't really do anything with WEEDS on their own."];
+		var value475 = ["You can't really do anything with WEEDS on their own."];
 		if(__map_reserved["use/wetWeeds"] != null) {
-			_g.setReserved("use/wetWeeds",value473);
+			_g.setReserved("use/wetWeeds",value475);
 		} else {
-			_g.h["use/wetWeeds"] = value473;
+			_g.h["use/wetWeeds"] = value475;
 		}
 	}
 	{
-		var value474 = ["You squish the WET CLOTH. Some water drips out of it and makes your feet wet.","You squish the WET CLOTH again, but all the excess water has already been drained from it."];
+		var value476 = ["You squish the WET CLOTH. Some water drips out of it and makes your feet wet.","You squish the WET CLOTH again, but all the excess water has already been drained from it."];
 		if(__map_reserved["use/wetcloth"] != null) {
-			_g.setReserved("use/wetcloth",value474);
+			_g.setReserved("use/wetcloth",value476);
 		} else {
-			_g.h["use/wetcloth"] = value474;
+			_g.h["use/wetcloth"] = value476;
 		}
 	}
 	{
-		var value475 = ["You fling the WET RAG around. It makes a funny warbling sound. You could have done this all day, but then a drop of blue chemical water gets in your eye and you decide to quit.","Your eye still hurts from the blue chemical water."];
+		var value477 = ["You fling the WET RAG around. It makes a funny warbling sound. You could have done this all day, but then a drop of blue chemical water gets in your eye and you decide to quit.","Your eye still hurts from the blue chemical water."];
 		if(__map_reserved["use/wetrag"] != null) {
-			_g.setReserved("use/wetrag",value475);
+			_g.setReserved("use/wetrag",value477);
 		} else {
-			_g.h["use/wetrag"] = value475;
+			_g.h["use/wetrag"] = value477;
 		}
 	}
 	{
-		var value476 = ["You suck on the FLUTE. It makes your mouth taste stale, but nothing else. Probably because it's not lit."];
+		var value478 = ["You suck on the FLUTE. It makes your mouth taste stale, but nothing else. Probably because it's not lit."];
 		if(__map_reserved["use/yellowFlute"] != null) {
-			_g.setReserved("use/yellowFlute",value476);
+			_g.setReserved("use/yellowFlute",value478);
 		} else {
-			_g.h["use/yellowFlute"] = value476;
+			_g.h["use/yellowFlute"] = value478;
 		}
 	}
 	{
-		var value477 = ["You can't really do anything with WEEDS on their own."];
+		var value479 = ["You can't really do anything with WEEDS on their own."];
 		if(__map_reserved["use/yellowWeeds"] != null) {
-			_g.setReserved("use/yellowWeeds",value477);
+			_g.setReserved("use/yellowWeeds",value479);
 		} else {
-			_g.h["use/yellowWeeds"] = value477;
+			_g.h["use/yellowWeeds"] = value479;
 		}
 	}
 	{
-		var value478 = ["Welcome to adventure!\n\nType HELP to get instructions."];
+		var value480 = ["Welcome to adventure!\n\nType HELP to get instructions."];
 		if(__map_reserved["welcome"] != null) {
-			_g.setReserved("welcome",value478);
+			_g.setReserved("welcome",value480);
 		} else {
-			_g.h["welcome"] = value478;
+			_g.h["welcome"] = value480;
 		}
 	}
 	if(__map_reserved["_DUMMY"] != null) {
@@ -8176,5 +8242,6 @@ adv_Parser.SHORTCUTS = (function($this) {
 	$r = _g;
 	return $r;
 }(this));
+adv_Profanity.PROFANITY = new EReg("\\b(p(ork|r(onk|icks?)|uss(ies|y)|iss( take|\\-take|take|e(rs|[srd])|ing|y)?)|quims?|root(e(rs|[rd])|ing|s)?|s(od(d(ed|ing)|s)?|punk|crew(ed|ing|s)?|h(ag(g(e(rs|[dr])|ing)|s)?|it(t(e(rs|[dr])|ing|y)|e(rs|[sdry])|ing|[se])?))|t(urds?|wats?|its?)|wank(e(rs|[rd])|ing|s)?|a(rs(e( hole|\\-hole|hole|[sd])|ing|e)|ss( holes?|\\-holes?|ed|holes?|ing))|b(on(e(rs|[sr])|ing|e)|u(gger|ll( shit(t(e(rs|[dr])|ing)|s)?|\\-shit(t(e(rs|[dr])|ing)|s)?|shit(t(e(rs|[dr])|ing)|s)?))|a(stard|ll(e(rs|[dr])|ing|s)?)|lo(ody|w( jobs?|\\-jobs?|jobs?)))|c(ock( suck(ers?|ing)|\\-suck(ers?|ing)|suck(ers?|ing)|s)?|rap(p(e(rs|[rd])|ing|y)|s)?|u(nts?|m(ing|ming|s)))|d(ongs?|ick( head|\\-head|ed|head|ing|less|s)?)|f(uck(ed|ing|s)?|art(e[rd]|ing|[sy])?|eltch(e(rs|[rsd])|ing)?)|h(ump(e(rs|[rd])|ing|s)?|a(rd[\\- ]?on|lf( a[sr]|\\-a[sr]|a[sr])sed))|m(other( fuck(ers?|ing)|\\-fuck(ers?|ing)|fuck(ers?|ing))|uth(a( fuck(ers?|ing|[aaa])|\\-fuck(ers?|ing|[aaa])|fuck(ers?|ing|[aaa]))|er( fuck(ers?|ing)|\\-fuck(ers?|ing)|fuck(ers?|ing)))|erde?))\\b","");
 AdventureScene.main();
 })();
