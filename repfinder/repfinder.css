@@ -1,0 +1,52 @@
+html {
+  font-family: sans-serif;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+}
+
+textarea {
+  width: 100%;
+}
+
+section {
+  margin-bottom: 2em;
+}
+
+h2 {
+  font-size: 120%;
+}
+
+#input-area {
+  height: 20em;
+}
+
+#stopwords-area {
+  height: 10em;
+}
+
+#output {
+  text-align: justify;
+}
+
+.word {
+  cursor: pointer;
+}
+
+.word:hover {
+  opacity: 50%;
+}
+
+.marked {
+  color: blue !important;
+  text-decoration: underline;
+  animation: blinker 0.1s linear 3;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
