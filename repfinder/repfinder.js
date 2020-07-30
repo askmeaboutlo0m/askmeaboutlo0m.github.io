@@ -216,7 +216,17 @@
     });
   }
 
+  function setUpPinButtonListener() {
+    let button    = document.querySelector('#pin-button');
+    let inputArea = document.querySelector('#input-area');
+    button.addEventListener('click', () => {
+      let verb = inputArea.classList.toggle('pinned') ? 'Unpin' : 'Pin';
+      button.firstChild.nodeValue = verb + ' Input';
+    });
+  }
+
   setUpChangeListener();
   setUpOptionsButtonListener();
+  setUpPinButtonListener();
   process();
 }());

@@ -19,8 +19,21 @@ h2 {
   font-size: 120%;
 }
 
-#input-area {
-  height: 20em;
+#fixed-bar {
+  background: rgba(255, 255, 255, 0.75);
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  padding: 0.5em;
+}
+
+#input-area.pinned {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 10em;
+  margin: 0;
 }
 
 #options-collapse {
@@ -31,10 +44,6 @@ h2 {
   display: block;
   border-left: 1px solid lightgray;
   padding-left: 1em;
-}
-
-#stopwords-area {
-  height: 10em;
 }
 
 #output {

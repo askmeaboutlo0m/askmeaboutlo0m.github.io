@@ -7,14 +7,19 @@
   </head>
   <body>
     <section id="introduction">
+      <div id="fixed-bar">
+        <div id="pin-button-div">
+          <button id="pin-button">Pin Input</button>
+        </div>
+      </div>
       <h1>repfinder</h1>
       <p>Finds repetitions in text, intended for English prose. Repetitions that are close to each other will be marked in orange. The stronger the color, the closer the repetition. You can click on a word to mark all of its occurences.</p>
-      <p>This could probably be improved a bunch. The algorithm is kinda just a guess that <em>seems</em> to work, but it's not exactly scientific. Having to scroll up to update the text is pretty annoying, it would be nicer if that could be done from some kind of overlay. Maybe it would also be nice to somehow explicitly ignore repetitions, but that's pretty difficult to keep persistent other than mangling your text. It could probably also recognize obviously intentional repetitions, like when you say "over and over".</p>
+      <p>This could probably be improved a bunch. The algorithm is kinda just a guess that <em>seems</em> to work, but it's not exactly scientific. The pinning looks pretty ugly, but it works, so I wouldn't go out of my way to fix it. Maybe it would also be nice to somehow explicitly ignore repetitions, but that's pretty difficult to keep persistent other than mangling your text. It could probably also recognize obviously intentional repetitions, like when you say "over and over".</p>
     </section>
     <section id="input">
       <h2>Input</h2>
       <p>Put your text here.</p>
-      <textarea id="input-area" class="want-change-listener"></textarea>
+      <textarea id="input-area" rows="20" class="want-change-listener"></textarea>
     </section>
     <section id="options">
       <button id="more-options-button" type="button">Show More Options</button>
@@ -28,7 +33,7 @@
         </select>
         <h2>Stopwords</h2>
         <p>These words will be ignored.</p>
-        <textarea id="stopwords-area" class="want-change-listener">a able about across after all almost also am among an and any are as at be because been but by can cannot could dear did do does either else ever every for from get got had has have he he'd her hers him his how however i if in into is it it'd its just least let like likely may me might most must my neither no nor not of off often on only or other our own rather said say says she she'd should since so some than that the their them then there these they this tis to too twas us wants was we were what when where which while who whom why will with would yet you your</textarea>
+        <textarea id="stopwords-area" rows="10" class="want-change-listener">a able about across after all almost also am among an and any are as at be because been but by can cannot could dear did do does either else ever every for from get got had has have he he'd her hers him his how however i if in into is it it'd its just least let like likely may me might most must my neither no nor not of off often on only or other our own rather said say says she she'd should since so some than that the their them then there these they this tis to too twas us wants was we were what when where which while who whom why will with would yet you your</textarea>
         <h2>Weights</h2>
         <p>You can adjust the way the word heat is calculated here. The algorithm will count up a counter every time a word or a paragraph is encountered. The value for each word is compared with the previous one. If the value is between 0 and the stone cold weight, the word gets a heat marking.</p>
         <p>
