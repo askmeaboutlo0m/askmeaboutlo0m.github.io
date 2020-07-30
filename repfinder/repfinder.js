@@ -1,60 +1,86 @@
 (function () {
   'use strict';
 
-  const PARAGRAPH_WEIGHT = 50.0;
-  const WORD_WEIGHT      = 1.0;
-  const LAST_MULTIPLIER  = 0.0;
-  const STONE_COLD       = 100.0;
+  function makeStemmer(stem) {
+    let mem = new Map();
+    return function (fragment) {
+      let memoized = mem.get(fragment);
+      if (memoized) {
+        return memoized;
+      }
+      else {
+        let result = stem(fragment);
+        mem.set(fragment, result);
+        return result;
+      }
+    };
+  }
+
+  function noneStemmer(fragment) {
+    return fragment;
+  }
+
+  let stemmers = new Map([
+    ['porter',    makeStemmer(window.stemmer)],
+    ['lancaster', makeStemmer(window.lancasterStemmer)],
+  ]);
 
   function splitIntoLines(input) {
     return input.split(/\r?\n/).filter(line => /\S/.test(line));
   }
 
   function normalizeWord(fragment) {
-    return fragment.toLowerCase()
-        .replace(/\u0027[ds]/g, '') // remove 's and 'd
-        .replace(/\P{L}/gu,     ''); // remove all non-letters
+    return fragment.toLowerCase().replace(/\P{L}/gu, '');
   }
 
-  function* splitIntoFragments(line, stopwords) {
-    for (let match of line.matchAll(/(\s+|-+)|([^\s-]+)/g)) {
-      if (match[1]) {
-        yield ['whitespace', match[1], ''];
+  function extractStopwordsSet(value, stemmer) {
+    return new Set(value.trim().split(/\s+/g).map(normalizeWord));
+  }
+
+  function parseNumberFromField(selector, defaultValue) {
+    let field = document.querySelector(selector);
+    let value = Number.parseFloat(field.value);
+    return Number.isNaN(value) ? defaultValue : value;
+  }
+
+  function* splitIntoFragments(line, stopwords, stemmer) {
+    for (let [, whitespace, fragment] of line.matchAll(/(\s+|-+)|([^\s-]+)/g)) {
+      if (whitespace) {
+        yield ['whitespace', whitespace, ''];
       }
       else {
-        let fragment = match[2];
-        let word     = normalizeWord(fragment);
-        yield [stopwords.has(word) ? 'stopword' : 'word', fragment, word];
+        let word = normalizeWord(fragment);
+        let type = stopwords.has(word) ? 'stopword' : 'word';
+        yield [type, fragment, stemmer(word)];
       }
     }
   }
 
-  function calculateHeat(word, current, heats) {
-    if (/\S/.test(word)) {
-      if (heats.has(word)) {
-        let last  = heats.get(word);
-        let delta = current - last;
-        heats.set(word, delta * LAST_MULTIPLIER + current);
-        return delta;
-      }
-      else {
-        heats.set(word, current);
-        return STONE_COLD;
-      }
-    }
-    return null;
-  }
-
-  function toHeatIntensity(heat) {
-    if (heat === undefined || heat === null || heat > STONE_COLD) {
+  function toHeatIntensity(heat, stoneCold) {
+    if (heat === undefined || heat === null || heat > stoneCold) {
       return 0.0;
     }
     else if (heat <= 0.0) {
       return 1.0;
     }
     else {
-      return 1.0 - heat / STONE_COLD;
+      return 1.0 - heat / stoneCold;
     }
+  }
+
+  function calculateHeat(word, current, heats, stoneCold) {
+    if (/\S/.test(word)) {
+      if (heats.has(word)) {
+        let last  = heats.get(word);
+        let delta = current - last;
+        heats.set(word, current);
+        return toHeatIntensity(delta, stoneCold);
+      }
+      else {
+        heats.set(word, current);
+      }
+    }
+    return toHeatIntensity(null, stoneCold);
   }
 
   function appendTextNode(parent, text) {
@@ -103,15 +129,16 @@
       span.setAttribute('title', 'Stopword, no heat');
     }
     else {
-      let alpha = toHeatIntensity(heat);
-      span.setAttribute('style', `background-color:rgba(255,100,0,${alpha});`);
-      span.setAttribute('title', `Heat: ${Math.round(alpha * 100)}%`);
+      span.setAttribute('style', `background-color:rgba(255,100,0,${heat});`);
+      span.setAttribute('title', `Stem: "${word}"\n` +
+                                 `Heat: ${Math.round(heat * 100)}%`);
     }
 
     span.addEventListener('click', markWords);
   }
 
-  function generateHeatMap(input, stopwords) {
+  function generateHeatMap(input, stopwords, stemmer, wordWeight,
+                           paragraphWeight, stoneCold) {
     let output  = document.createElement('div');
     let heats   = new Map();
     let current = 1.0;
@@ -119,12 +146,13 @@
     for (let line of splitIntoLines(input)) {
       let p = appendNewElement(output, 'p');
 
-      for (let [type, fragment, word] of splitIntoFragments(line, stopwords)) {
+      for (let [type, fragment, word] of
+          splitIntoFragments(line, stopwords, stemmer)) {
         if (type === 'word') {
           let span = appendNewElement(p, 'span', fragment);
-          let heat = calculateHeat(word, current, heats);
+          let heat = calculateHeat(word, current, heats, stoneCold);
           setUpWordSpan(span, word, heat);
-          current += WORD_WEIGHT;
+          current += wordWeight;
         }
         else if (type === 'stopword') {
           let span = appendNewElement(p, 'span', fragment);
@@ -135,7 +163,7 @@
         }
       }
 
-      current += PARAGRAPH_WEIGHT;
+      current += paragraphWeight;
     }
 
     output.classList.add('output-div');
@@ -151,10 +179,17 @@
   }
 
   function process() {
-    let inputArea     = document.querySelector('#input-area');
-    let stopwordsArea = document.querySelector('#stopwords-area');
-    let stopwords     = new Set(stopwordsArea.value.trim().split(/\s+/g));
-    setOutputSection(generateHeatMap(inputArea.value, stopwords));
+    let inputArea       = document.querySelector('#input-area');
+    let stopwordsArea   = document.querySelector('#stopwords-area');
+    let stemmerSelect   = document.querySelector('#stemmer-select');
+    let stemmer         = stemmers.get(stemmerSelect.value) || noneStemmer;
+    let stopwords       = extractStopwordsSet(stopwordsArea.value);
+    let wordWeight      = parseNumberFromField('#word-weight-field',       1.0);
+    let paragraphWeight = parseNumberFromField('#paragraph-weight-field', 50.0);
+    let stoneCold       = parseNumberFromField('#stone-cold-field',      100.0);
+    setOutputSection(generateHeatMap(inputArea.value, stopwords, stemmer,
+                                     wordWeight, paragraphWeight,
+                                     Math.max(stoneCold, 1.0)));
   }
 
   let lastTimeoutId;
@@ -166,12 +201,22 @@
   }
 
   function setUpChangeListener() {
-    for (let area of document.querySelectorAll('#input-area, #stopwords-area')) {
+    for (let area of document.querySelectorAll('.want-change-listener')) {
       area.addEventListener('change', onChange);
       area.addEventListener('keyup',  onChange);
     }
   }
 
+  function setUpOptionsButtonListener() {
+    let button  = document.querySelector('#more-options-button');
+    let options = document.querySelector('#options-collapse');
+    button.addEventListener('click', () => {
+      let verb = options.classList.toggle('visible') ? 'Hide' : 'Show';
+      button.firstChild.nodeValue = verb + ' More Options';
+    });
+  }
+
   setUpChangeListener();
+  setUpOptionsButtonListener();
   process();
 }());

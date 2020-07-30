@@ -23,6 +23,16 @@ h2 {
   height: 20em;
 }
 
+#options-collapse {
+  display: none;
+}
+
+#options-collapse.visible {
+  display: block;
+  border-left: 1px solid lightgray;
+  padding-left: 1em;
+}
+
 #stopwords-area {
   height: 10em;
 }
