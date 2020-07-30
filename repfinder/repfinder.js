@@ -1,4 +1,6 @@
 (function () {
+  'use strict';
+
   const PARAGRAPH_WEIGHT = 50.0;
   const WORD_WEIGHT      = 1.0;
   const LAST_MULTIPLIER  = 0.0;
@@ -11,11 +13,11 @@
   function normalizeWord(fragment) {
     return fragment.toLowerCase()
         .replace(/\u0027[ds]/g, '') // remove 's and 'd
-        .replace(/\P{L}/gu, ''); // remove all non-letters
+        .replace(/\P{L}/gu,     ''); // remove all non-letters
   }
 
   function* splitIntoFragments(line, stopwords) {
-    for (match of line.matchAll(/(\s+|-+)|([^\s-]+)/g)) {
+    for (let match of line.matchAll(/(\s+|-+)|([^\s-]+)/g)) {
       if (match[1]) {
         yield ['whitespace', match[1], ''];
       }
@@ -119,15 +121,14 @@
 
       for (let [type, fragment, word] of splitIntoFragments(line, stopwords)) {
         if (type === 'word') {
-          let span  = appendNewElement(p, 'span', fragment);
-          let heat  = calculateHeat(word, current, heats);
+          let span = appendNewElement(p, 'span', fragment);
+          let heat = calculateHeat(word, current, heats);
           setUpWordSpan(span, word, heat);
           current += WORD_WEIGHT;
         }
         else if (type === 'stopword') {
-          let span  = appendNewElement(p, 'span', fragment);
+          let span = appendNewElement(p, 'span', fragment);
           setUpWordSpan(span, word);
-          span.addEventListener('click', markWords);
         }
         else {
           appendTextNode(p, fragment);
