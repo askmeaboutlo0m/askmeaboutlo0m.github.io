@@ -1,0 +1,95 @@
+html {
+  font-family: sans-serif;
+  padding-bottom: 20em;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+}
+
+textarea {
+  width: 100%;
+}
+
+section {
+  margin-bottom: 2em;
+}
+
+#output {
+  text-align: justify;
+  white-space: pre-line;
+}
+
+.tooltip {
+  color: #a400a4;
+  position: relative;
+  text-decoration: underline;
+  cursor: default;
+}
+
+.tooltip > span {
+  color: black;
+  background: rgba(255, 187, 255, 0.95);
+  margin-left: -999em;
+  position: absolute;
+  text-align: center;
+  cursor: default;
+}
+
+.tooltip:hover > span {
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  position: absolute;
+  left: -8em;
+  margin-left: 0;
+  top: 1em;
+  width: 20em;
+  z-index: 1;
+}
+
+.tooltip.content {
+  color: hsl(17, 100%, 30%);
+}
+
+.tooltip.content > span {
+  background: hsla(17, 100%, 85%, 0.95);
+}
+
+.tooltip.form {
+  color: hsl(40, 100%, 30%);
+}
+
+.tooltip.form > span {
+  background: hsla(40, 100%, 85%, 0.95);
+}
+
+.tooltip.grammar {
+  color: hsl(0, 100%, 30%);
+}
+
+.tooltip.grammar > span {
+  background: hsla(0, 100%, 85%, 0.95);
+}
+
+.tooltip.spelling {
+  color: hsl(240, 100%, 30%);
+}
+
+.tooltip.spelling > span {
+  background: hsla(240, 100%, 85%, 0.95);
+}
+
+.tooltip.tense {
+  color: hsl(120, 100%, 30%);
+}
+
+.tooltip.tense > span {
+  background: hsla(120, 100%, 85%, 0.95);
+}
+
+.annotation-type {
+  display: block;
+  font-size: 75%;
+  margin-top: 0.5em;
+  opacity: 75%;
+}

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>annotate</title>
+    <link rel="stylesheet" href="annotate.css">
+  </head>
+  <body>
+    <section id="introduction">
+      <h1>annotate</h1>
+      <p>Allows you to annotate text, intended for reviewing stories and the like. You can annotate text like <code>[original text](note)</code> or <code>[original text](type|note)</code>. Supported types are <strong>c</strong>ontent, <strong>f</strong>orm, <strong>g</strong>rammar, <strong>s</strong>pelling and <strong>t</strong>ense. Use them as you see fit.</p>
+      <p>Paste your text into the field below and add your annotations. When you're done, copy the text out again! This page does <em>not</em> store anything.</p>
+      <p>Select some text and hit <kbd><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>c/f/g/s/t</kbd></kbd> to automatically insert the annotation.</p>
+    </section>
+    <section id="input">
+      <textarea id="input-area" rows="20"></textarea>
+    </section>
+    <section id="output">
+    </section>
+    <script src="annotate.js"></script>
+  </body>
+</html>
