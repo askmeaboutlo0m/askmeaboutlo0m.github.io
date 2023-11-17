@@ -377,7 +377,7 @@ adv_Adventure.prototype = {
 		}
 		this.print("");
 		this.print("");
-		this.print("(Send a note or something to report his amazing feat!)");
+		this.print("(Send a note or something to report this amazing feat!)");
 		this.print("");
 		this.print("");
 		this.over = true;
@@ -736,7 +736,7 @@ adv_BossRoom.prototype = $extend(adv_Room.prototype,{
 	look: function() {
 		var lines;
 		if(this.has(adv_Thing.dragon)) {
-			lines = ["You find yourself in a small room, which is mostly filled","out by a large, fiersome DRAGON! It must be the root of all","evil, the mastermind behind all of this. The air is hot and","thick with smoke, filling you with anticipation and your","lungs with carbon monoxide: you're ready for a fight!"];
+			lines = ["You find yourself in a small room, which is mostly filled","out by a large, fearsome DRAGON! It must be the root of all","evil, the mastermind behind all of this. The air is hot and","thick with smoke, filling you with anticipation and your","lungs with carbon monoxide: you're ready for a fight!"];
 		} else {
 			lines = ["You're standing in the now-empty room and are clutching your","spoils of combat in each hand: the GREETING CARD and the","TWENTY DOLLARS that were inside it. On the ground lay the","broken pair of GLASSES you knocked down. In front of you are","STAIRS leading upwards to the surface, from where sunlight","is streaming in."];
 		}
@@ -912,7 +912,7 @@ adv_RestRoom.prototype = $extend(adv_Room.prototype,{
 });
 var adv_SecretPassage = function() {
 	adv_Room.call(this);
-	this.things = [adv_Thing.temple,adv_Thing.exitDoor,adv_Thing.lever,adv_Thing._holePipes];
+	this.things = [adv_Thing.exitDoor,adv_Thing.temple,adv_Thing.lever,adv_Thing._holePipes];
 };
 adv_SecretPassage.__name__ = true;
 adv_SecretPassage.__super__ = adv_Room;
@@ -1660,10 +1660,10 @@ adv_Thing.dragon = (function($this) {
 	} else {
 		_g.h["befriend"] = "talk";
 	}
-	$r = new adv_Thing("dragon","DRAGON","DRAGON",["boss","claw","claws","creature","dragon","drake","eyes","fred","friend","friends","glasses","maw","monster","mouth","nose","nostrils","paw","paws","smoke","tail","teeth","wyrm"],_g);
+	$r = new adv_Thing("dragon","DRAGON","DRAGON",["boss","claw","claws","creature","dragon","drake","eyes","fred","friend","friends","glasses","maw","monster","mouth","nose","nostrils","paw","paws","smoke","tail","teeth","wyrm","tie"],_g);
 	return $r;
 }(this));
-adv_Thing.dressShirt = new adv_Thing("dressShirt","DRESSSHIRT","DRESSSHIRT",["card","dress","dressshirt","greeting","greetingcard","shirt","suit","tie"],null);
+adv_Thing.dressShirt = new adv_Thing("dressShirt","DRESSSHIRT","DRESSSHIRT",["card","dress","dressshirt","greeting","greetingcard","shirt","suit"],null);
 adv_Thing.exitDoor = (function($this) {
 	var $r;
 	var _g = new haxe_ds_StringMap();
@@ -6637,7 +6637,7 @@ adv_Data.messages = (function($this) {
 		}
 	}
 	{
-		var value287 = ["It's a fiersome DRAGON! Its long, spiked tail twitches restlessly, its man-sized claws scrape the ground underneath and smoke is rising from its flaring nostrils. Which is fogging up the little, square glasses sitting on its nose.","The large DRAGON stares back at you, looking determined and fearless. Its fingers are fiddling with his badly-tied tie, while his other hand firmly grips a greeting card in its DRESS SHIRT pocket for reassurance.","It's getting kinda awkward to have you stare at the DRAGON so much. It shakily opens his mouth to say something, but then chokes on its own smoke and enters a coughing fit.","The DRAGON has recovered from its coughing and is looking embarrassed. Its breath has gotten quick and it seems to be sweating nervously. The situation is getting dangerously uncomfortable.","The poor little DRAGON just looks around the room, evading your stare."];
+		var value287 = ["It's a fearsome DRAGON! Its long, spiked TAIL twitches restlessly, its man-sized CLAWS scrape the ground underneath and smoke is rising from its flaring NOSTRILS. Which is fogging up the little, square GLASSES sitting on its nose.","The large DRAGON stares back at you, looking determined and fearless. Its fingers are fiddling with his badly-tied TIE, while his other hand firmly grips a greeting card in its DRESS SHIRT pocket for reassurance.","It's getting kinda awkward to have you stare at the DRAGON so much. It shakily opens its MAW to say something, but then chokes on its own smoke and enters a coughing fit.","The DRAGON has recovered from its coughing and is looking embarrassed. Its breath has gotten quick and it seems to be sweating nervously. The situation is getting dangerously uncomfortable.","The poor little DRAGON just looks around the room, evading your stare."];
 		if(__map_reserved["look/dragon"] != null) {
 			_g.setReserved("look/dragon",value287);
 		} else {
@@ -6909,7 +6909,7 @@ adv_Data.messages = (function($this) {
 		}
 	}
 	{
-		var value321 = ["It's a life-sized STATUE made from dark marble. It depicts some kind of bard with frilly clothing a rather dopey expression."];
+		var value321 = ["It's a life-sized STATUE made from dark marble. It depicts some kind of bard with frilly clothing and a rather dopey expression."];
 		if(__map_reserved["look/statue"] != null) {
 			_g.setReserved("look/statue",value321);
 		} else {
