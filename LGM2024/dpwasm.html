@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>drawpile.net/lgm</title>
+    <script src="weenote.js"></script>
+    <style>
+      body {
+        font-family: "Dejavu Sans Mono", "monospace";
+        background-color: #fff;
+        color: #000;
+        white-space: nowrap;
+      }
+
+      div {
+        white-space: pre;
+        line-height: 1.5;
+      }
+
+      a, em {
+        color: #C00;
+        font-style: normal;
+      }
+
+      a {
+        border-bottom: .1em dotted;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body><div>drawpile.net/lgm</div><div> Making  Drawpile
+Run in the Browser</div><div>desktop application
+        ↓
+    web browser</div><div>developers</div><div>Carsten</div><div>askmeaboutloom</div><div>English and German</div><div>AGENDA</div><div>what?
+    
+    
+          </div><div>what?
+why?
+    
+          </div><div>what?
+why?
+how?
+          </div><div>what?
+why?
+how?
+questions?</div><div>interrupt me!</div><div>WHAT?</div><div>yesterday</div><div>drawing program</div><div class="image"><img src="drawpile-desktop.png"></div><div class="image"><img src="drawpile-smallscreen.png"></div><div> 
+drawing program</div><div> collaborative
+drawing program</div><div>"multiplayer"</div><div>GPLv3</div><div>QtWidgets</div><div>drawpile.net/lgm</div><div>ask me about it</div><div>WHY?</div><div>collaboration</div><div>barrier of entry</div><div>iOS/iPadOS</div><div>PWA</div><div>HOW?</div><div>WebAssembly</div><div>                          
+ 
+       core engine</div><div>desktop                   
+      ↖
+       core engine</div><div>desktop   mobile          
+      ↖     ↑
+       core engine</div><div>desktop   mobile   browser
+      ↖     ↑     ↗
+       core engine</div><div>nope</div><div class="image"><img src="drawpile-browser.png"></div><div class="image"><img src="drawpile-browser-smallscreen.png"></div><div>☐ QtWidgets
+        
+       
+         
+                
+                        
+                      </div><div>☐ QtWidgets (etc)
+        
+       
+         
+                
+                        
+                      </div><div>☐ QtWidgets (etc)
+☐ OpenGL
+       
+         
+                
+                        
+                      </div><div>☐ QtWidgets (etc)
+☐ OpenGL
+☐ files
+         
+                
+                        
+                      </div><div>☐ QtWidgets (etc)
+☐ OpenGL
+☐ files
+☐ sockets
+                
+                        
+                      </div><div>☐ QtWidgets (etc)
+☐ OpenGL
+☐ files
+☐ sockets
+☐ multithreading
+                        
+                      </div><div>☐ QtWidgets (etc)
+☐ OpenGL
+☐ files
+☐ sockets
+☐ multithreading
+☐ pressure-sensitive pen
+                      </div><div>☐ QtWidgets (etc)
+☐ OpenGL
+☐ files
+☐ sockets
+☐ multithreading
+☐ pressure-sensitive pen
+☐ Rust                </div><div>☐ QtWidgets (etc)
+☐ OpenGL
+☐ files
+☐ sockets
+☐ multithreading
+☐ pressure-sensitive pen
+☐ Rust (spoiler: nope)</div><div>- QtWidgets -</div><div>Qt for WebAssembly</div><div>WebAssembly</div><div>Emscripten</div><div>compiler</div><div>runtime</div><div>how to WebAssemble Qt:
+ </div><div>how to WebAssemble Qt:
+  (on Linux)</div><div>how to WebAssemble Qt:
+  (on Linux for Qt6)</div><div>install Emscripten</div><div>build host Qt</div><div>cross-compile Qt</div><div>gotcha: asyncify</div><div>-device-option QT_EMSCRIPTEN_ASYNCIFY=1</div><div>gotcha: threads</div><div>-feature-thread</div><div>other dependencies:</div><div>bin/qt-cmake</div><div>emconfigure ./configure …</div><div>emmake make …</div><div>your application:</div><div>bin/qt-cmake</div><div>target_compile_options
+       -pthread</div><div>target_link_options:
+   -sASYNCIFY -Os</div><div>app.html</div><div>✔ QtWidgets
+☐ OpenGL
+☐ files
+☐ sockets
+☐ multithreading
+☐ pressure-sensitive pen
+☐ Rust</div><div>- OpenGL -</div><div>WebGL</div><div>OpenGL ES 2.0</div><div>QOpenGLWidget</div><div>gotcha: QTBUG-120651</div><div class="image"><img src="blackness.png"></div><div>webgl_is_hard.diff</div><div>✔ QtWidgets
+✔ OpenGL
+☐ files
+☐ sockets
+☐ multithreading
+☐ pressure-sensitive pen
+☐ Rust</div><div>- files -</div><div>Emscripten MEMFS</div><div>Emscripten IDBFS</div><div>QSettings</div><div>QFileDialog::getOpenFileContent</div><div>QFileDialog::saveFileContent</div><div>gotcha: needs user interaction</div><div>✔ QtWidgets
+✔ OpenGL
+✔ files
+☐ sockets
+☐ multithreading
+☐ pressure-sensitive pen
+☐ Rust</div><div>- sockets -</div><div>QNetworkAccessManager</div><div>QtWebSockets</div><div>Emscripten TCP Emulation</div><div>gotcha: CORS</div><div>gotcha: HTTPS</div><div>✔ QtWidgets
+✔ OpenGL
+✔ files
+✔ sockets
+☐ multithreading
+☐ pressure-sensitive pen
+☐ Rust</div><div>- multithreading -</div><div> pthreads </div><div>"pthreads"</div><div>web workers</div><div>overhead</div><div>OpenGL</div><div>memory</div><div>SharedArrayBuffer</div><div>                    
+      gotchas</div><div>consists entirely of
+      gotchas</div><div>Spectre of Meltdown</div><div> secure context </div><div>"secure context"</div><div>HTTPS</div><div>localhost</div><div>cross-origin isolation</div><div>CORP</div><div>CORS</div><div>CORP</div><div>Cross-Origin-Resource-Policy: same-site
+                                       
+                                          </div><div>Cross-Origin-Resource-Policy: same-site
+Cross-Origin-Opener-Policy: same-origin
+                                          </div><div>Cross-Origin-Resource-Policy: same-site
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp</div><div>-sMAXIMUM_MEMORY</div><div>Safari</div><div>WebAssembly.Memory</div><div>new WebAssembly.Memory({
+    initial,
+    maximum,
+    shared,
+})</div><div>Safari can't take a hint</div><div>lower maximum</div><div>backoff</div><div>LibraryManager.library.$getHeapMax</div><div>refresh</div><div>✔ QtWidgets
+✔ OpenGL
+✔ files
+✔ sockets
+✔ multithreading
+☐ pressure-sensitive pen
+☐ Rust</div><div>- pressure-sensitive pen -</div><div>PointerEvent</div><div>pointerType: "pen"</div><div>most browsers</div><div>Windows Ink</div><div>QTabletEvent</div><div>Qt 6.6.3</div><div>plenty of gotchas</div><div>gotcha: touch event conflict</div><div>cancel_touch_on_pen.diff</div><div>gotcha: eraser</div><div>TabletEnterProximity
+TabletLeaveProximity</div><div>nope</div><div>Qt::LeftButton
+Qt::TaskButton</div><div>gotcha: Apple Pen pressure</div><div class="image"><img src="pressure-normal.png"></div><div class="image"><img src="pressure-applepen.png"></div><div>global pressure curve</div><div>user agent</div><div>gotcha: handwriting detection</div><div class="image"><img src="handwriting1.png"></div><div class="image"><img src="handwriting2.png"></div><div class="image"><img src="handwriting3.png"></div><div>always shows up</div><div>turn it off</div><div class="image"><img src="handwritingsettings.png"></div><div>Qt 6.7</div><div>- contenteditable="true"
++ tabindex="-1"</div><div>✔ QtWidgets
+✔ OpenGL
+✔ files
+✔ sockets
+✔ multithreading
+✔ pressure-sensitive pen
+☐ Rust</div><div>- Rust -</div><div>supposedly</div><div>wasm32-unknown-unknown
+wasm32-unknown-emscripten</div><div>wasm32-unknown-emscripten</div><div>nope</div><div>bitrot</div><div>wasm32-unknown-unknown</div><div>static library</div><div>no threads</div><div>-C target-feature=+atomics,+bulk-memory</div><div>-Z build-std=core,std,alloc,proc_macro,panic_abort</div><div>works </div><div>works?</div><div>+nightly</div><div>unstable</div><div>don't blame me</div><div>Rust-free</div><div>correct me</div><div>✔ QtWidgets
+✔ OpenGL
+✔ files
+✔ sockets
+✔ multithreading
+✔ pressure-sensitive pen
+✔ Rust</div><div>✔ QtWidgets
+✔ OpenGL
+✔ files
+✔ sockets
+✔ multithreading
+✔ pressure-sensitive pen
+✘ Rust</div><div>that's it</div><div>thanks for listening</div><div>drawpile.net/lgm</div></body>
+</html>

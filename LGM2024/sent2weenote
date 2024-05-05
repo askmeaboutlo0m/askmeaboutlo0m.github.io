@@ -1,0 +1,75 @@
+#!/usr/bin/env perl
+use 5.030;
+use warnings;
+use utf8;
+use Encode;
+
+
+my @slides;
+{
+    local $/ = '';
+    while (<>) {
+        my $slide = decode('UTF-8', $_);
+        chomp $slide;
+        push @slides, $slide;
+    }
+}
+
+my %escapes = (
+    '&' => '&amp;',
+    '<' => '&lt;',
+    '>' => '&gt;',
+);
+
+my $title = $slides[0];
+$title =~ s/\A\s+|\s+\z//g;
+$title =~ s/\s+/ /g;
+$title =~ s/([<>&])/$escapes{$1}/gi;
+
+my $html = '';
+for (@slides) {
+    if (/\A\@(\S.*)\s*\z/) {
+        my $src = $1;
+        $src =~ s/([<>&])/$escapes{$1}/gi;
+        $html .= qq{<div class="image"><img src="$src"></div>};
+    } else {
+        my $slide = s/([<>&])/$escapes{$1}/gir;
+        $html .= "<div>$slide</div>";
+    }
+}
+
+print encode('UTF-8', <<END_OF_HTML);
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>$title</title>
+    <script src="weenote.js"></script>
+    <style>
+      body {
+        font-family: "Dejavu Sans Mono", "monospace";
+        background-color: #fff;
+        color: #000;
+        white-space: nowrap;
+      }
+
+      div {
+        white-space: pre;
+        line-height: 1.5;
+      }
+
+      a, em {
+        color: #C00;
+        font-style: normal;
+      }
+
+      a {
+        border-bottom: .1em dotted;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>$html</body>
+</html>
+END_OF_HTML
