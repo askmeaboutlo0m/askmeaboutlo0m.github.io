@@ -1,0 +1,189 @@
+ 3000%  Faster
+  File  Saving
+With Time Travel
+
+file formats
+
+developers
+
+no stats
+
+story
+
+interrupt me!
+
+                    (sip)                    
+
+Carsten
+
+askmeaboutloom
+
+Drawpile
+
+
+OpenRaster Archive
+
+ORA
+
+XML and PNGs
+  in a ZIP
+
+good
+
+size
+
+exchange
+
+archival
+
+work format
+
+slow
+
+whole layers
+
+merged image
+
+data loss
+
+not incremental
+
+                    (sip)                    
+
+new format!
+
+dpcs
+
+
+pixel storage
+
+ORA, PSD: whole layers
+
+KRA, XCF: tiles
+
+tiles
+
+blankness
+
+parallelize
+
+compression
+
+speed over size
+
+lossless
+
+DEFLATE
+
+WEBP
+
+LZMA
+
+zstd
+
+really fast
+
+comparable size
+
+split channels
+
+delta encode
+
+smaller
+
+faster
+
+RLE     
+
+RLE (no)
+
+QOI     
+
+QOI (no)
+
+dictionary     
+
+dictionary (no)
+
+zstd + delta
+
+                    (sip)                    
+
+
+container
+
+ORA, KRA: ZIP
+
+PSD, XCF: custom
+
+obviously
+
+SQLite
+
+single-file database
+
+meant for this
+
+fast
+
+ubiquitous
+
+durable
+
+recoverable
+
+SQL
+
+query
+
+incremental
+
+
+dpcs: SQLite + zstd
+
+30x faster
+
+faster than JPEG
+
+                    (sip)                    
+
+incremental
+
+future
+
+cool
+
+dprec
+
+demo
+
+network
+
+stream
+
+playback
+
+                    (sip)                    
+
+continuous
+ autosave
+
+time travel
+
+alter history
+
+timelapse
+
+time tracking
+
+dppr
+
+thanks
+
+questions?
+        
+
+questions?
+  ideas?
+
+thanks again
